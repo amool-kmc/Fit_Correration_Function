@@ -65,9 +65,46 @@ def getdeta(inputDataFile):
     datafile.close()
 
     return npdata
+
+
+###---------------------------------------------------------------------------
+###1/tauとqのlogを取り、そのグラフを描いて（インスタンス生成のみ、plotはしない）傾きを調べる関数
+###---------------------------------------------------------------------------
+def tauqgraph(taus,qs,inputFileDirectory):
+    #1/tau,qのlogを取る
+    taus_inv = np.log(1 / taus)
+    qs = np.log(qs)
+
+    #フィッティング
+    init_parameter = [2,10]
+    param_opt, cov = curve_fit(tau_qFunction,qs,taus_inv,init_parameter)
+
+    #グラフの描画
+    plt.plot(qs,taus_inv,'o',markersize=4)
+
+    #フィッティング曲線
+    #x軸刻み(最小オーダー、最大オーダー、プロット数)
+    q_axis = np.linspace(-5.7,-4.8,1000)
+    tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
+    plt.plot(q_axis, tau_fit, linewidth=1.3, label=inputFileDirectory)
+    plt.legend("")
+
+    #グラフのセット
+    plt.grid(True)
+    plt.title("tau-q")
+    plt.xlabel('log(q)', fontsize=12)
+    plt.ylabel('log(1/tau)', fontsize=12)
+    plt.text(-5.6,3.5,"grad  " + str(param_opt[0]))
+    #setting2 = plt.gca()
+    #setting2.set_xscale('log')
+    #setting2.set_yscale('log')
+
+    #返り値は傾き
+    return param_opt[0]
     
+
 ###--------------------------------------------------------
-###指定ディレクトリ内のASCファイルを解析し、自己相関関数とtau-qグラフを描く関数
+###指定ディレクトリ内のASCファイルを解析し、自己相関関数のフィッティングを行い、各種解析をする
 ###--------------------------------------------------------
 def analysisfordir(inputFileDirectory):
     ###ファイル読み込み-----------------------------------------
@@ -132,8 +169,6 @@ def analysisfordir(inputFileDirectory):
         #グラフの保存
         #plt.savefig(os.path.join(pngDirectory,))
         
-
-
 
 
     #自己相関関数の表示
