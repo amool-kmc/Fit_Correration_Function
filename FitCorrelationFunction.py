@@ -174,37 +174,9 @@ def analysisfordir(inputFileDirectory):
     #自己相関関数の表示
     plt.show()
     '''
-
-    ###1/tau,qのlogを取りフィッティング-----------------------------------
-    taus_inv = np.log(1 / taus)
-    qs = np.log(qs)
-
-
-    #tau-qフィッティング
-    init_parameter2 = [2,10]
-    param_opt2, cov2 = curve_fit(tau_qFunction,qs,taus_inv,init_parameter2)
-
-    #tau-qグラフの描画(ただし対数を取っている)
-    plt.plot(qs,taus_inv,'o',markersize=4)
-
-    #フィッティング曲線
-    #x軸刻み(最小オーダー、最大オーダー、プロット数)
-    q_axis = np.linspace(-5.7,-4.8,1000)
-    tau_fit = tau_qFunction(q_axis,param_opt2[0],param_opt2[1])
-    plt.plot(q_axis, tau_fit, linewidth=1.3, label=inputFileDirectory)
-    plt.legend("")
-
-    #グラフ設定と表示
-    plt.grid(True)
-    plt.title("tau-q")
-    plt.xlabel('log(q)', fontsize=12)
-    plt.ylabel('log(1/tau)', fontsize=12)
-    plt.text(-5.6,3.5,"grad  " + str(param_opt2[0]))
-    #setting2 = plt.gca()
-    #setting2.set_xscale('log')
-    #setting2.set_yscale('log')
-
-
+    
+    #tau-qグラフ生成
+    tauqgraph(taus,qs,inputFileDirectory)
 
 
 ###--------------------------------------------------------------------------------------
