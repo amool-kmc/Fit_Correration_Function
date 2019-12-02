@@ -18,9 +18,9 @@ ASC_DATA_END_ROW = 217
 ###メイン関数
 ###--------------------------------------------------------
 def main():
-    analysisfordir("/KUniv/Q10/191029asc/28deg")
-    analysisfordir("/KUniv/Q10/191029asc/32deg")
-    analysisfordir("/KUniv/Q10/191029asc/34deg")
+    analysisfordir("/KUniv/Q10/191129")
+    #analysisfordir("/KUniv/Q10/191029asc/32deg")
+    #analysisfordir("/KUniv/Q10/191029asc/34deg")
 
     plt.show()
 
@@ -117,8 +117,15 @@ def analysisfordir(inputFileDirectory):
 
     #各ASCについて解析-------------------------------------------------------------
     for inputDataFile in inputDataFiles:
-        #散乱ベクトルqの取得
-        angle = int(re.sub(".ASC","",re.sub(inputFileDirectory + "\\\\5CB_","",inputDataFile))) #角度(元の数値)
+        #ファイル名から各パラメーターを取得（angle_temp_closs_time_name.ASC）
+        filename = re.sub(".ASC","",re.sub(inputFileDirectory + "\\\\","",inputDataFile)) #ファイル名取り出し（パスの部分と拡張子を除去）
+        input_parameters = filename.split("_") #パラメータを取得
+        
+        #取得パラメータ
+        angle = float(input_parameters[0])
+        temperature = float(input_parameters[1])
+        time = float(input_parameters[3])
+
         #ある角度では弾くようにするときはここで
         if(angle >= 10000):
             continue
@@ -144,7 +151,7 @@ def analysisfordir(inputFileDirectory):
 
 
         ###グラフの表示----------------------------------------------------
-        '''
+        #'''
         #生データ
         plt.plot(x_data,y_data,'o',label="raw data",markersize=4)
 
@@ -171,10 +178,10 @@ def analysisfordir(inputFileDirectory):
         
 
 
-    #自己相関関数の表示
-    plt.show()
-    '''
-    
+        #自己相関関数の表示
+        plt.show()
+        #'''
+
     #tau-qグラフ生成
     tauqgraph(taus,qs,inputFileDirectory)
 
