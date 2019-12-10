@@ -11,7 +11,7 @@ import re
 LAMBDA = 532
 #ASCファイルにおけるデータ行の開始と終わり
 ASC_DATA_START_ROW = 27
-ASC_DATA_END_ROW = 217
+ASC_DATA_END_ROW = 225
 
 
 ###--------------------------------------------------------
@@ -94,7 +94,7 @@ def tauqgraph(taus,qs,inputFileDirectory):
     plt.title("tau-q")
     plt.xlabel('log(q)', fontsize=12)
     plt.ylabel('log(1/tau)', fontsize=12)
-    plt.text(-5.6,3.5,"grad  " + str(param_opt[0]))
+    plt.text(-5.2,-1.25,"gradient  " + str(param_opt[0]))
     #setting2 = plt.gca()
     #setting2.set_xscale('log')
     #setting2.set_yscale('log')
@@ -125,11 +125,14 @@ def analysisfordir(inputFileDirectory):
         angle = float(input_parameters[0])
         temperature = float(input_parameters[1])
         time = float(input_parameters[3])
+        sample_name = input_parameters[4]
 
         #ある角度では弾くようにするときはここで
-        if(angle >= 10000):
+        if(angle < 9500 and angle >= 8500):
             continue
-        qs = np.append(qs,calculating_q(angle))
+        #角度の計算
+        q = calculating_q(angle)
+        qs = np.append(qs,q)
 
 
         #データセット
@@ -138,6 +141,7 @@ def analysisfordir(inputFileDirectory):
         y_data = data[:,1]
         init_parameter = [1,0,1,1]
 
+        print(angle)
         ###自己相関関数のフィッティング-----------------------------------------------
         param_opt, cov = curve_fit(correlationFunction,x_data,y_data,init_parameter)
 
@@ -151,20 +155,21 @@ def analysisfordir(inputFileDirectory):
 
 
         ###グラフの表示----------------------------------------------------
-        #'''
+        
         #生データ
-        plt.plot(x_data,y_data,'o',label="raw data",markersize=4)
-
+        plt.scatter(x_data,y_data,label=str(angle))
+        
         #フィッティング曲線
         #x軸刻み(最小オーダー、最大オーダー、プロット数)
         x_axis = np.logspace(-4.2,4.2,1000)
         y_fit = correlationFunction(x_axis,a,b,beta,tau)
-        plt.plot(x_axis, y_fit,linewidth=1.3, label='fitted curve')
-
-        #ラベル等の設定
+        plt.plot(x_axis, y_fit,linewidth=1.3)
+        
+        ###ラベル等の設定
         plt.grid(True)
-        plt.title("Correlataion Function")
-        #plt.legend(loc='upper right')
+        plt.title("Correlataion Function("+sample_name+")")
+        plt.legend()
+        #plt.ylim([0,0.58])
         plt.xlabel('time (ms)', fontsize=12)
         plt.ylabel('I', fontsize=12)
 
@@ -179,9 +184,10 @@ def analysisfordir(inputFileDirectory):
 
 
         #自己相関関数の表示
-        plt.show()
-        #'''
+        #plt.show()
+        
 
+    plt.show()
     #tau-qグラフ生成
     tauqgraph(taus,qs,inputFileDirectory)
 
