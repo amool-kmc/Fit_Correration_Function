@@ -128,42 +128,56 @@ def analysisfordir(inputFileDirectory):
         sample_name = input_parameters[4]
 
         #ある角度では弾くようにするときはここで
+        '''
         if(angle < 9500 and angle >= 8500):
             continue
-        #角度の計算
-        q = calculating_q(angle)
-        qs = np.append(qs,q)
-
+        '''
+        
 
         #データセット
         data = getdeta(inputDataFile)
         x_data = data[:,0]
         y_data = data[:,1]
         init_parameter = [1,0,1,1]
-
-        print(angle)
+        
+        #フィッティング曲線表示のフラグ
+        plot_fittingcurve = True
         ###自己相関関数のフィッティング-----------------------------------------------
-        param_opt, cov = curve_fit(correlationFunction,x_data,y_data,init_parameter)
+        #フィッティングが失敗したときは例外処理を施し、生データのみプロットする
+        try:
+            param_opt, cov = curve_fit(correlationFunction,x_data,y_data,init_parameter)
+            print(angle," completed fitting")
 
-        #フィッティングパラメーターの取得
-        a = param_opt[0]
-        b = param_opt[1]
-        beta = param_opt[2]
-        tau = param_opt[3]
+            #フィッティングパラメーターの取得
+            a = param_opt[0]
+            b = param_opt[1]
+            beta = param_opt[2]
+            tau = param_opt[3]
 
-        taus =np.append(taus,tau)
+            #τの追加
+            taus = np.append(taus,tau)
+            #角度の計算、追加
+            q = calculating_q(angle)
+            qs = np.append(qs,q)
 
+        except RuntimeError:
+            print(angle," failed fitting")
+            plot_fittingcurve = False
+
+
+        
 
         ###グラフの表示----------------------------------------------------
         
         #生データ
-        plt.scatter(x_data,y_data,label=str(angle))
+        plt.scatter(x_data,y_data,s=1.5,label=str(angle))
         
         #フィッティング曲線
         #x軸刻み(最小オーダー、最大オーダー、プロット数)
-        x_axis = np.logspace(-4.2,4.2,1000)
-        y_fit = correlationFunction(x_axis,a,b,beta,tau)
-        plt.plot(x_axis, y_fit,linewidth=1.3)
+        if(plot_fittingcurve):
+            x_axis = np.logspace(-4.2,4.2,1000)
+            y_fit = correlationFunction(x_axis,a,b,beta,tau)
+            plt.plot(x_axis, y_fit, linewidth=1.3)
         
         ###ラベル等の設定
         plt.grid(True)
