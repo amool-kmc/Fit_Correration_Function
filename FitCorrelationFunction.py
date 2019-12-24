@@ -79,26 +79,26 @@ def tauqgraph(taus,qs,inputFileDirectory):
     init_parameter = [2,10]
     param_opt, cov = curve_fit(tau_qFunction,qs,taus_inv,init_parameter)
 
-    #グラフの描画
-    plt.plot(qs,taus_inv,'o',markersize=4)
+    ###グラフの生成
+    fig_tq = plt.figure()
+    ax_tq = fig_tq.add_subplot(111,title="ln(1/tau) vs ln(q)")
 
-    #フィッティング曲線
+    #生データのグラフの描画
+    ax_tq.scatter(qs,taus_inv,marker='o',s=8)
+    
+    #フィッティング曲線の描画
     #x軸刻み(最小オーダー、最大オーダー、プロット数)
     q_axis = np.linspace(-5.7,-4.8,1000)
     tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
-    plt.plot(q_axis, tau_fit, linewidth=1.3, label=inputFileDirectory)
-    plt.legend("")
+    ax_tq.plot(q_axis, tau_fit, c="red", linewidth=1.3, label=inputFileDirectory)
 
     #グラフのセット
-    plt.grid(True)
-    plt.title("tau-q")
-    plt.xlabel('log(q)', fontsize=12)
-    plt.ylabel('log(1/tau)', fontsize=12)
-    plt.text(-5.2,-1.25,"gradient  " + str(param_opt[0]))
-    #setting2 = plt.gca()
-    #setting2.set_xscale('log')
-    #setting2.set_yscale('log')
-
+    ax_tq.grid(True)
+    #plt.title("ln(1/tau) vs q")
+    ax_tq.set_xlabel('log(q)', fontsize=12)
+    ax_tq.set_ylabel('log(1/tau)', fontsize=12)
+    fig_tq.text(0.01,0.9,"gradient  " + str(param_opt[0]))
+    
     #返り値は傾き
     return param_opt[0]
     
