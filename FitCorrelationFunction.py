@@ -146,7 +146,7 @@ def analysisfordir(inputFileDirectory):
         #フィッティングが失敗したときは例外処理を施し、生データのみプロットする
         try:
             param_opt, cov = curve_fit(correlationFunction,x_data,y_data,init_parameter)
-            print(angle," completed fitting")
+            print(angle," fitting completed")
 
             #フィッティングパラメーターの取得
             a = param_opt[0]
@@ -161,7 +161,7 @@ def analysisfordir(inputFileDirectory):
             qs = np.append(qs,q)
 
         except RuntimeError:
-            print(angle," failed fitting")
+            print(angle," fitting failed")
             plot_fittingcurve = False
 
 
@@ -181,9 +181,9 @@ def analysisfordir(inputFileDirectory):
         
         ###ラベル等の設定
         plt.grid(True)
-        plt.title("Correlataion Function("+sample_name+")")
-        plt.legend()
-        #plt.ylim([0,0.58])
+        plt.title("Correlataion Function(" + sample_name + ")")
+        plt.legend(fontsize=10,title="angle")
+        plt.ylim([0,0.58])
         plt.xlabel('time (ms)', fontsize=12)
         plt.ylabel('I', fontsize=12)
 
