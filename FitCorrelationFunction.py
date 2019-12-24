@@ -115,6 +115,10 @@ def analysisfordir(inputFileDirectory):
     taus = np.empty(0)
     qs = np.empty(0)
 
+    #グラフインスタンス
+    fig_corf = plt.figure()
+    ax_corf = fig_corf.add_subplot(111,title="Correlataion Function")
+
     #各ASCについて解析-------------------------------------------------------------
     for inputDataFile in inputDataFiles:
         #ファイル名から各パラメーターを取得（angle_temp_closs_time_name.ASC）
@@ -126,12 +130,6 @@ def analysisfordir(inputFileDirectory):
         temperature = float(input_parameters[1])
         time = float(input_parameters[3])
         sample_name = input_parameters[4]
-
-        #ある角度では弾くようにするときはここで
-        '''
-        if(angle < 9500 and angle >= 8500):
-            continue
-        '''
         
 
         #データセット
@@ -168,39 +166,29 @@ def analysisfordir(inputFileDirectory):
         
 
         ###グラフの表示----------------------------------------------------
-        
         #生データ
-        plt.scatter(x_data,y_data,s=1.5,label=str(angle))
+        ax_corf.scatter(x_data,y_data,marker='o',s=1.5,label=str('{:.3g}'.format(angle*18./6000.)))
         
         #フィッティング曲線
         #x軸刻み(最小オーダー、最大オーダー、プロット数)
         if(plot_fittingcurve):
             x_axis = np.logspace(-4.2,4.2,1000)
             y_fit = correlationFunction(x_axis,a,b,beta,tau)
-            plt.plot(x_axis, y_fit, linewidth=1.3)
+            ax_corf.plot(x_axis, y_fit, linewidth=1.3)
         
         ###ラベル等の設定
-        plt.grid(True)
-        plt.title("Correlataion Function(" + sample_name + ")")
-        plt.legend(fontsize=10,title="angle")
-        plt.ylim([0,0.58])
-        plt.xlabel('time (ms)', fontsize=12)
-        plt.ylabel('I', fontsize=12)
+        ax_corf.grid(True)
+        ax_corf.legend(fontsize=10,title="angle")
+        ax_corf.set_ylim([0,0.58])
+        ax_corf.set_xlabel('time (ms)', fontsize=12)
+        ax_corf.set_ylabel('I', fontsize=12)
 
-        #グラフの描画
+        #logscaleに
         setting1 = plt.gca()
         setting1.set_xscale('log')
-        #plt.show()
 
-        #グラフの保存
-        #plt.savefig(os.path.join(pngDirectory,))
         
-
-
-        #自己相関関数の表示
-        #plt.show()
-        
-
+    
     plt.show()
     #tau-qグラフ生成
     tauqgraph(taus,qs,inputFileDirectory)
