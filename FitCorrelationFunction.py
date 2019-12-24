@@ -97,7 +97,7 @@ def tauqgraph(taus,qs,inputFileDirectory):
     #plt.title("ln(1/tau) vs q")
     ax_tq.set_xlabel('log(q)', fontsize=12)
     ax_tq.set_ylabel('log(1/tau)', fontsize=12)
-    fig_tq.text(0.01,0.9,"gradient  " + str(param_opt[0]))
+    fig_tq.text(0.13,0.9,"gradient  " + str('{:.3g}'.format(param_opt[0])))
     
     #返り値は傾き
     return param_opt[0]
