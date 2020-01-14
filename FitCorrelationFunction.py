@@ -18,12 +18,17 @@ ASC_DATA_END_ROW = 217
 ###メイン関数
 ###--------------------------------------------------------
 def main():
-    analysisfordir("/KUniv/Q10/200114/agalyo_vh")
-    #analysisfordir("/KUniv/Q10/200114/lyoonly_vh")
+    taus1,qs1 = analysisfordir("/KUniv/Q10/200114/agalyo_vh_fix")
+    taus2,qs2 = analysisfordir("/KUniv/Q10/200114/lyoonly_vh")
     #analysisfordir("/KUniv/Q10/191029asc/32deg")
     #analysisfordir("/KUniv/Q10/191029asc/34deg")
 
-    plt.show()
+    #tau-qグラフを重ねて描画
+    tauss = np.array([taus1,taus2])
+    qss = np.array([qs1,qs2])
+    label = ["agalyo","lyo"]
+    draw_multi_tauqgraph(tauss,qss,label)
+
 
 ###--------------------------------------------------------
 ###フィッティング関数の定義
@@ -103,6 +108,49 @@ def tauqgraph(taus,qs,inputFileDirectory):
     #返り値は傾き
     return param_opt[0]
     
+###---------------------------------------------------------------------------
+###1/tauとqのlogを取り、そのグラフを重ねて描く関数（引数はnp.arrayのnp.array([[] []])）
+###---------------------------------------------------------------------------
+def draw_multi_tauqgraph(tauss,qss,label):
+    ###グラフの生成
+    fig_tq = plt.figure()
+    ax_tq = fig_tq.add_subplot(111,title="ln(1/tau) vs ln(q)")
+
+    #散布図と曲線の準備
+    for i in range(len(tauss)):
+        taus = tauss[i]
+        qs = qss[i]
+
+        #1/tau,qのlogを取る
+        taus_inv = np.log(1 / taus)
+        qs = np.log(qs)
+
+        #フィッティング
+        init_parameter = [2,10]
+        param_opt, cov = curve_fit(tau_qFunction,qs,taus_inv,init_parameter)
+
+        
+
+        #生データのグラフの描画
+        ax_tq.scatter(qs,taus_inv,marker='o',s=8,label=label[i])
+        
+        #フィッティング曲線の描画
+        #x軸刻み(最小オーダー、最大オーダー、プロット数)
+        q_axis = np.linspace(-5.7,-4.8,1000)
+        tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
+        ax_tq.plot(q_axis, tau_fit, linewidth=1.3)
+
+    #グラフのセット
+    ax_tq.grid(True)
+    ax_tq.legend(fontsize=10,title="sample")
+    ax_tq.set_xlabel('log(q)', fontsize=12)
+    ax_tq.set_ylabel('log(1/tau)', fontsize=12)
+    #fig_tq.text(0.13,0.9,"gradient  " + str('{:.3g}'.format(param_opt[0])))
+
+    plt.show()
+        
+        
+
 
 ###--------------------------------------------------------
 ###指定ディレクトリ内のASCファイルを解析し、自己相関関数のフィッティングを行い、各種解析をする
@@ -180,7 +228,7 @@ def analysisfordir(inputFileDirectory):
         ###ラベル等の設定
         ax_corf.grid(True)
         ax_corf.legend(fontsize=10,title="angle")
-        ax_corf.set_ylim([0,0.58])
+        ax_corf.set_ylim([0,1])
         ax_corf.set_xlabel('time (ms)', fontsize=12)
         ax_corf.set_ylabel('I', fontsize=12)
 
@@ -192,7 +240,9 @@ def analysisfordir(inputFileDirectory):
     
     plt.show()
     #tau-qグラフ生成
-    tauqgraph(taus,qs,inputFileDirectory)
+    #tauqgraph(taus,qs,inputFileDirectory)
+
+    return taus, qs
 
 
 ###--------------------------------------------------------------------------------------
