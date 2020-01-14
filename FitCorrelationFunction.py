@@ -11,14 +11,15 @@ import re
 LAMBDA = 532
 #ASCファイルにおけるデータ行の開始と終わり
 ASC_DATA_START_ROW = 27
-ASC_DATA_END_ROW = 225
+ASC_DATA_END_ROW = 217
 
 
 ###--------------------------------------------------------
 ###メイン関数
 ###--------------------------------------------------------
 def main():
-    analysisfordir("/KUniv/Q10/191129")
+    analysisfordir("/KUniv/Q10/200114/agalyo_vh")
+    #analysisfordir("/KUniv/Q10/200114/lyoonly_vh")
     #analysisfordir("/KUniv/Q10/191029asc/32deg")
     #analysisfordir("/KUniv/Q10/191029asc/34deg")
 
