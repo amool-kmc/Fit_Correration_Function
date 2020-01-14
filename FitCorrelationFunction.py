@@ -80,26 +80,26 @@ def tauqgraph(taus,qs,inputFileDirectory):
     init_parameter = [2,10]
     param_opt, cov = curve_fit(tau_qFunction,qs,taus_inv,init_parameter)
 
-    #グラフの描画
-    plt.plot(qs,taus_inv,'o',markersize=4)
+    ###グラフの生成
+    fig_tq = plt.figure()
+    ax_tq = fig_tq.add_subplot(111,title="ln(1/tau) vs ln(q)")
 
-    #フィッティング曲線
+    #生データのグラフの描画
+    ax_tq.scatter(qs,taus_inv,marker='o',s=8)
+    
+    #フィッティング曲線の描画
     #x軸刻み(最小オーダー、最大オーダー、プロット数)
     q_axis = np.linspace(-5.7,-4.8,1000)
     tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
-    plt.plot(q_axis, tau_fit, linewidth=1.3, label=inputFileDirectory)
-    plt.legend("")
+    ax_tq.plot(q_axis, tau_fit, c="red", linewidth=1.3, label=inputFileDirectory)
 
     #グラフのセット
-    plt.grid(True)
-    plt.title("tau-q")
-    plt.xlabel('log(q)', fontsize=12)
-    plt.ylabel('log(1/tau)', fontsize=12)
-    plt.text(-5.2,-1.25,"gradient  " + str(param_opt[0]))
-    #setting2 = plt.gca()
-    #setting2.set_xscale('log')
-    #setting2.set_yscale('log')
-
+    ax_tq.grid(True)
+    #plt.title("ln(1/tau) vs q")
+    ax_tq.set_xlabel('log(q)', fontsize=12)
+    ax_tq.set_ylabel('log(1/tau)', fontsize=12)
+    fig_tq.text(0.13,0.9,"gradient  " + str('{:.3g}'.format(param_opt[0])))
+    
     #返り値は傾き
     return param_opt[0]
     
@@ -116,6 +116,10 @@ def analysisfordir(inputFileDirectory):
     taus = np.empty(0)
     qs = np.empty(0)
 
+    #グラフインスタンス
+    fig_corf = plt.figure()
+    ax_corf = fig_corf.add_subplot(111,title="Correlataion Function")
+
     #各ASCについて解析-------------------------------------------------------------
     for inputDataFile in inputDataFiles:
         #ファイル名から各パラメーターを取得（angle_temp_closs_time_name.ASC）
@@ -127,12 +131,6 @@ def analysisfordir(inputFileDirectory):
         temperature = float(input_parameters[1])
         time = float(input_parameters[3])
         sample_name = input_parameters[4]
-
-        #ある角度では弾くようにするときはここで
-        '''
-        if(angle < 9500 and angle >= 8500):
-            continue
-        '''
         
 
         #データセット
@@ -169,39 +167,29 @@ def analysisfordir(inputFileDirectory):
         
 
         ###グラフの表示----------------------------------------------------
-        
         #生データ
-        plt.scatter(x_data,y_data,s=1.5,label=str(angle))
+        ax_corf.scatter(x_data,y_data,marker='o',s=1.5,label=str('{:.3g}'.format(angle*18./6000.)))
         
         #フィッティング曲線
         #x軸刻み(最小オーダー、最大オーダー、プロット数)
         if(plot_fittingcurve):
             x_axis = np.logspace(-4.2,4.2,1000)
             y_fit = correlationFunction(x_axis,a,b,beta,tau)
-            plt.plot(x_axis, y_fit, linewidth=1.3)
+            ax_corf.plot(x_axis, y_fit, linewidth=1.3)
         
         ###ラベル等の設定
-        plt.grid(True)
-        plt.title("Correlataion Function(" + sample_name + ")")
-        plt.legend(fontsize=10,title="angle")
-        plt.ylim([0,0.58])
-        plt.xlabel('time (ms)', fontsize=12)
-        plt.ylabel('I', fontsize=12)
+        ax_corf.grid(True)
+        ax_corf.legend(fontsize=10,title="angle")
+        ax_corf.set_ylim([0,0.58])
+        ax_corf.set_xlabel('time (ms)', fontsize=12)
+        ax_corf.set_ylabel('I', fontsize=12)
 
-        #グラフの描画
+        #logscaleに
         setting1 = plt.gca()
         setting1.set_xscale('log')
-        #plt.show()
 
-        #グラフの保存
-        #plt.savefig(os.path.join(pngDirectory,))
         
-
-
-        #自己相関関数の表示
-        #plt.show()
-        
-
+    
     plt.show()
     #tau-qグラフ生成
     tauqgraph(taus,qs,inputFileDirectory)
