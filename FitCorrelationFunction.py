@@ -18,17 +18,32 @@ ASC_DATA_END_ROW = 217
 ###メイン関数
 ###--------------------------------------------------------
 def main():
-    taus1,qs1 = analysisfordir("/KUniv/Q10/200114/agalyo_vh_fix")
-    taus2,qs2 = analysisfordir("/KUniv/Q10/200114/lyoonly_vh")
-    #analysisfordir("/KUniv/Q10/191029asc/32deg")
-    #analysisfordir("/KUniv/Q10/191029asc/34deg")
+    '''
+    taus1,qs1 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp27")
+    taus2,qs2 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp29")
+    taus3,qs3 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp31")
+    taus4,qs4 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp33")
+    taus5,qs5 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp35")
+    taus1,qs1 = analysisfordir("/KUniv/Q10/200213/lyo_temp27")
+    taus2,qs2 = analysisfordir("/KUniv/Q10/200213/lyo_temp29")
+    taus3,qs3 = analysisfordir("/KUniv/Q10/200213/lyo_temp31")
+    taus4,qs4 = analysisfordir("/KUniv/Q10/200213/lyo_temp33")
+    '''
+    taus1,qs1 = analysisfordir("/KUniv/Q10/200213/lyo_temp27")
+    #taus2,qs2 = analysisfordir("/KUniv/Q10/200114/agalyo_vh_fix")
+    taus3,qs3 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp27")
+    
+    #taus5,qs5 = analysisfordir("/KUniv/Q10/200213/lyo_temp35")
+    
+    
 
     #tau-qグラフを重ねて描画
-    tauss = np.array([taus1,taus2])
-    qss = np.array([qs1,qs2])
-    label = ["agalyo","lyo"]
+    
+    tauss = np.array([taus1,taus3])
+    qss = np.array([qs1,qs3])
+    label = ["0%","0.5%"]
     draw_multi_tauqgraph(tauss,qss,label)
-
+    
 
 ###--------------------------------------------------------
 ###フィッティング関数の定義
@@ -40,11 +55,44 @@ def tau_qFunction(x,a,b):
     return a*x + b
 
 ###--------------------------------------------------------
+###二重緩和のとき小さい緩和をカットする関数（参照渡し）
+###--------------------------------------------------------
+def cutdata(y_data,threshold):
+    for i in range(len(y_data)):
+        if(y_data[i] > threshold):
+            y_data[i] = y_data[i] - threshold
+        elif(y_data[i] <= threshold):
+            y_data[i] = 0
+
+###--------------------------------------------------------
 ###散乱ベクトルを計算する関数
 ###--------------------------------------------------------
 def calculating_q(angle):
     theta = angle * 18 / 6000 #6000 = 18°
     return 4 * np.pi * np.sin(np.deg2rad(theta)/2) / LAMBDA #散乱ベクトルの大きさ
+
+###--------------------------------------------------------
+###自己相関関数の規格化
+###--------------------------------------------------------
+def nomalize(y_data):
+    #平均から最大値を算出
+    max_cont = 30
+    max_tot = 0
+    for i in range(max_cont):
+        max_tot += y_data[i]
+    max_ave = max_tot / max_cont
+
+    #平均から最小値を算出
+    min_cont = 30
+    min_tot = 0
+    for i in range(min_cont):
+        min_tot += y_data[-i]
+    min_ave = min_tot / min_cont
+
+    #規格化
+    new_y = (y_data - min_ave) / (max_ave - min_ave)
+
+    return new_y
 
 ###--------------------------------------------------------
 ###ASCファイルからデータを抽出し、NumPy配列で返す関数
@@ -100,7 +148,6 @@ def tauqgraph(taus,qs,inputFileDirectory):
 
     #グラフのセット
     ax_tq.grid(True)
-    #plt.title("ln(1/tau) vs q")
     ax_tq.set_xlabel('log(q)', fontsize=12)
     ax_tq.set_ylabel('log(1/tau)', fontsize=12)
     fig_tq.text(0.13,0.9,"gradient  " + str('{:.3g}'.format(param_opt[0])))
@@ -129,7 +176,6 @@ def draw_multi_tauqgraph(tauss,qss,label):
         init_parameter = [2,10]
         param_opt, cov = curve_fit(tau_qFunction,qs,taus_inv,init_parameter)
 
-        
 
         #生データのグラフの描画
         ax_tq.scatter(qs,taus_inv,marker='o',s=8,label=label[i])
@@ -164,7 +210,7 @@ def analysisfordir(inputFileDirectory):
     taus = np.empty(0)
     qs = np.empty(0)
 
-    #グラフインスタンス
+    #グラフインスタンス生成
     fig_corf = plt.figure()
     ax_corf = fig_corf.add_subplot(111,title="Correlataion Function")
 
@@ -186,6 +232,9 @@ def analysisfordir(inputFileDirectory):
         x_data = data[:,0]
         y_data = data[:,1]
         init_parameter = [1,0,1,1]
+
+        #データの規格化
+        y_data = nomalize(y_data)
         
         #フィッティング曲線表示のフラグ
         plot_fittingcurve = True
@@ -201,9 +250,9 @@ def analysisfordir(inputFileDirectory):
             beta = param_opt[2]
             tau = param_opt[3]
 
-            #τの追加
+            #τの保存
             taus = np.append(taus,tau)
-            #角度の計算、追加
+            #角度の計算、保存
             q = calculating_q(angle)
             qs = np.append(qs,q)
 
@@ -216,7 +265,7 @@ def analysisfordir(inputFileDirectory):
 
         ###グラフの表示----------------------------------------------------
         #生データ
-        ax_corf.scatter(x_data,y_data,marker='o',s=1.5,label=str('{:.3g}'.format(angle*18./6000.)))
+        ax_corf.scatter(x_data,y_data,marker='o',s=2,label=str('{:.3g}'.format(angle*18./6000.)))
         
         #フィッティング曲線
         #x軸刻み(最小オーダー、最大オーダー、プロット数)
@@ -228,7 +277,7 @@ def analysisfordir(inputFileDirectory):
         ###ラベル等の設定
         ax_corf.grid(True)
         ax_corf.legend(fontsize=10,title="angle")
-        ax_corf.set_ylim([0,1])
+        ax_corf.set_ylim([0,1.3])
         ax_corf.set_xlabel('time (ms)', fontsize=12)
         ax_corf.set_ylabel('I', fontsize=12)
 
