@@ -18,32 +18,79 @@ ASC_DATA_END_ROW = 217
 ###メイン関数
 ###--------------------------------------------------------
 def main():
-    '''
-    taus1,qs1 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp27")
-    taus2,qs2 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp29")
-    taus3,qs3 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp31")
-    taus4,qs4 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp33")
-    taus5,qs5 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp35")
-    taus1,qs1 = analysisfordir("/KUniv/Q10/200213/lyo_temp27")
-    taus2,qs2 = analysisfordir("/KUniv/Q10/200213/lyo_temp29")
-    taus3,qs3 = analysisfordir("/KUniv/Q10/200213/lyo_temp31")
-    taus4,qs4 = analysisfordir("/KUniv/Q10/200213/lyo_temp33")
-    '''
-    taus1,qs1 = analysisfordir("/KUniv/Q10/200213/lyo_temp27")
-    #taus2,qs2 = analysisfordir("/KUniv/Q10/200114/agalyo_vh_fix")
-    taus3,qs3 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp27")
     
-    #taus5,qs5 = analysisfordir("/KUniv/Q10/200213/lyo_temp35")
-    
+    taus1,qs1 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp27")
+    taus2,qs2 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp29")
+    taus3,qs3 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp31")
+    taus4,qs4 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp33")
+    taus5,qs5 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp35")
     
 
+
+    '''
+
+    taus1,qs1 = analysisfordir("/KUniv/Q10/200213/lyo_temp27")
+    taus2,qs2 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp27")
+    
+    taus3,qs3 = analysisfordir("/KUniv/Q10/200213/lyo_temp29")
+    taus4,qs4 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp29")
+
+    taus5,qs5 = analysisfordir("/KUniv/Q10/200213/lyo_temp31")
+    taus6,qs6 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp31")
+    
+    taus7,qs7 = analysisfordir("/KUniv/Q10/200213/lyo_temp33")
+    taus8,qs8 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp33")
+    '''
+    '''
+    taus1,qs1 = analysisfordir("/KUniv/Q10/200217/lyovv_temp27")
+    taus2,qs2 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp27")
+    
+    taus3,qs3 = analysisfordir("/KUniv/Q10/200217/lyovv_temp29")
+    taus4,qs4 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp29")
+
+    taus5,qs5 = analysisfordir("/KUniv/Q10/200217/lyovv_temp31")
+    taus6,qs6 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp31")
+    
+    taus7,qs7 = analysisfordir("/KUniv/Q10/200217/lyovv_temp33")
+    taus8,qs8 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp33")
+    '''
+
+    
     #tau-qグラフを重ねて描画
-    
-    tauss = np.array([taus1,taus3])
-    qss = np.array([qs1,qs3])
-    label = ["0%","0.5%"]
+    '''
+    tauss = np.array([taus1,taus2,taus3,taus4])
+    qss = np.array([qs1,qs2,qs3,qs4])
+    label = ["27","29","31","33"]
     draw_multi_tauqgraph(tauss,qss,label)
+    '''
+
+    taus = np.array([taus1[1],taus2[1],taus3[1],taus4[1],taus5[1]])
+    temp = np.array([27,29,31,33,35])
     
+    tau_tgraph(taus,temp)
+    
+
+    '''
+    tauss = np.array([taus1,taus2])
+    qss = np.array([qs1,qs2])
+    label = ["27_0%","27_0.5%"]
+    draw_multi_tauqgraph(tauss,qss,label)
+
+    tauss = np.array([taus3,taus4])
+    qss = np.array([qs3,qs4])
+    label = ["29_0%","29_0.5%"]
+    draw_multi_tauqgraph(tauss,qss,label)
+
+    tauss = np.array([taus5,taus6])
+    qss = np.array([qs5,qs6])
+    label = ["31_0%","31_0.5%"]
+    draw_multi_tauqgraph(tauss,qss,label)
+
+    tauss = np.array([taus7,taus8])
+    qss = np.array([qs7,qs8])
+    label = ["33_0%","33_0.5%"]
+    draw_multi_tauqgraph(tauss,qss,label)
+    '''
 
 ###--------------------------------------------------------
 ###フィッティング関数の定義
@@ -195,7 +242,26 @@ def draw_multi_tauqgraph(tauss,qss,label):
 
     plt.show()
         
-        
+###---------------------------------------------------------------------------
+###緩和時間(tau)と温度の関数
+###---------------------------------------------------------------------------
+def tau_tgraph(taus,temps):
+    ###グラフの生成
+    fig = plt.figure()
+    ax = fig.add_subplot(111,title="tau vs temperature")
+
+    #散布図
+
+    #生データのグラフの描画
+    ax.scatter(temps,taus,marker='o',s=8)
+
+    #グラフのセット
+    ax.grid(True)
+    ax.legend(fontsize=10,title="sample")
+    ax.set_xlabel('temperature', fontsize=12)
+    ax.set_ylabel('relaxation time[ms]', fontsize=12)
+
+    plt.show()
 
 
 ###--------------------------------------------------------
