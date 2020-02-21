@@ -7,11 +7,11 @@ import glob
 import re
 
 ###定数定義
-#波長
+#波長[nm]
 LAMBDA = 532
 #ASCファイルにおけるデータ行の開始と終わり
 ASC_DATA_START_ROW = 27
-ASC_DATA_END_ROW = 217
+ASC_DATA_END_ROW = 209
 
 
 ###--------------------------------------------------------
@@ -19,77 +19,84 @@ ASC_DATA_END_ROW = 217
 ###--------------------------------------------------------
 def main():
     
-    taus1,qs1 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp27")
-    taus2,qs2 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp29")
-    taus3,qs3 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp31")
-    taus4,qs4 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp33")
-    taus5,qs5 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp35")
-    
-
-
-    '''
-
-    taus1,qs1 = analysisfordir("/KUniv/Q10/200213/lyo_temp27")
-    taus2,qs2 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp27")
-    
-    taus3,qs3 = analysisfordir("/KUniv/Q10/200213/lyo_temp29")
-    taus4,qs4 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp29")
-
-    taus5,qs5 = analysisfordir("/KUniv/Q10/200213/lyo_temp31")
-    taus6,qs6 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp31")
-    
-    taus7,qs7 = analysisfordir("/KUniv/Q10/200213/lyo_temp33")
-    taus8,qs8 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp33")
-    '''
-    '''
-    taus1,qs1 = analysisfordir("/KUniv/Q10/200217/lyovv_temp27")
-    taus2,qs2 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp27")
-    
+    #taus1,qs1 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp25")
+    taus2,qs2 = analysisfordir("/KUniv/Q10/200217/lyovv_temp27")
     taus3,qs3 = analysisfordir("/KUniv/Q10/200217/lyovv_temp29")
-    taus4,qs4 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp29")
-
-    taus5,qs5 = analysisfordir("/KUniv/Q10/200217/lyovv_temp31")
-    taus6,qs6 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp31")
+    taus4,qs4 = analysisfordir("/KUniv/Q10/200217/lyovv_temp31")
+    taus5,qs5 = analysisfordir("/KUniv/Q10/200217/lyovv_temp33")
+    #taus6,qs6 = analysisfordir("/KUniv/Q10/200217/lyovv_temp35")
+    #taus7,qs7 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp37")
     
-    taus7,qs7 = analysisfordir("/KUniv/Q10/200217/lyovv_temp33")
-    taus8,qs8 = analysisfordir("/KUniv/Q10/200217/agalyo05vv_temp33")
+
+
+    
+    
+    '''
+    taus1,qs1 = analysisfordir("/KUniv/Q10/200219/lyovh_temp27")
+    taus2,qs2 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp27")
+    
+    taus3,qs3 = analysisfordir("/KUniv/Q10/200219/lyovh_temp29")
+    taus4,qs4 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp29")
+
+    taus5,qs5 = analysisfordir("/KUniv/Q10/200219/lyovh_temp31")
+    taus6,qs6 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp31")
+    
+    taus7,qs7 = analysisfordir("/KUniv/Q10/200219/lyovh_temp33")
+    taus8,qs8 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp33")
+
+    taus9,qs9 = analysisfordir("/KUniv/Q10/200219/lyovh_temp35")
+    taus10,qs10 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp35")
     '''
 
     
     #tau-qグラフを重ねて描画
-    '''
-    tauss = np.array([taus1,taus2,taus3,taus4])
-    qss = np.array([qs1,qs2,qs3,qs4])
+    
+    #tauss = np.array([taus1,taus2,taus3,taus4,taus5,taus6])
+    tauss = np.array([taus2,taus3,taus4,taus5])
+    #qss = np.array([qs1,qs2,qs3,qs4,qs5,qs6])
+    qss = np.array([qs2,qs3,qs4,qs5])
     label = ["27","29","31","33"]
-    draw_multi_tauqgraph(tauss,qss,label)
+    #label = ["27","29","31","33","35"]
+    title="VV lyo"
+    draw_multi_tauqgraph(tauss,qss,label,title,"temperature")
+
+    '''
+    
+    tauss = np.array([taus1,taus2])
+    qss = np.array([qs1,qs2])
+    label = ["lyo","aga + lyo"]
+    title = "VH temp27"
+    leg_title = "sample"
+    draw_multi_tauqgraph(tauss,qss,label,title,leg_title)
+
+    tauss = np.array([taus3,taus4])
+    qss = np.array([qs3,qs4])
+    title = "VH temp29"
+    draw_multi_tauqgraph(tauss,qss,label,title,leg_title)
+
+    tauss = np.array([taus5,taus6])
+    qss = np.array([qs5,qs6])
+    title = "VH temp31"
+    draw_multi_tauqgraph(tauss,qss,label,title,leg_title)
+
+    tauss = np.array([taus7,taus8])
+    qss = np.array([qs7,qs8])
+    title = "VH temp33"
+    draw_multi_tauqgraph(tauss,qss,label,title,leg_title)
+
+    tauss = np.array([taus9,taus10])
+    qss = np.array([qs9,qs10])
+    title = "VH temp35"
+    draw_multi_tauqgraph(tauss,qss,label,title,leg_title)
     '''
 
+
+    #tau-temp
+    '''
     taus = np.array([taus1[1],taus2[1],taus3[1],taus4[1],taus5[1]])
     temp = np.array([27,29,31,33,35])
     
     tau_tgraph(taus,temp)
-    
-
-    '''
-    tauss = np.array([taus1,taus2])
-    qss = np.array([qs1,qs2])
-    label = ["27_0%","27_0.5%"]
-    draw_multi_tauqgraph(tauss,qss,label)
-
-    tauss = np.array([taus3,taus4])
-    qss = np.array([qs3,qs4])
-    label = ["29_0%","29_0.5%"]
-    draw_multi_tauqgraph(tauss,qss,label)
-
-    tauss = np.array([taus5,taus6])
-    qss = np.array([qs5,qs6])
-    label = ["31_0%","31_0.5%"]
-    draw_multi_tauqgraph(tauss,qss,label)
-
-    tauss = np.array([taus7,taus8])
-    qss = np.array([qs7,qs8])
-    label = ["33_0%","33_0.5%"]
-    draw_multi_tauqgraph(tauss,qss,label)
     '''
 
 ###--------------------------------------------------------
@@ -116,7 +123,7 @@ def cutdata(y_data,threshold):
 ###--------------------------------------------------------
 def calculating_q(angle):
     theta = angle * 18 / 6000 #6000 = 18°
-    return 4 * np.pi * np.sin(np.deg2rad(theta)/2) / LAMBDA #散乱ベクトルの大きさ
+    return 4 * np.pi * np.sin(np.deg2rad(theta)/2) / (LAMBDA * (10**-9)) #散乱ベクトルの大きさ
 
 ###--------------------------------------------------------
 ###自己相関関数の規格化
@@ -189,7 +196,7 @@ def tauqgraph(taus,qs,inputFileDirectory):
     
     #フィッティング曲線の描画
     #x軸刻み(最小オーダー、最大オーダー、プロット数)
-    q_axis = np.linspace(-5.7,-4.8,1000)
+    q_axis = np.linspace(15,16,1000)
     tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
     ax_tq.plot(q_axis, tau_fit, c="red", linewidth=1.3, label=inputFileDirectory)
 
@@ -205,10 +212,10 @@ def tauqgraph(taus,qs,inputFileDirectory):
 ###---------------------------------------------------------------------------
 ###1/tauとqのlogを取り、そのグラフを重ねて描く関数（引数はnp.arrayのnp.array([[] []])）
 ###---------------------------------------------------------------------------
-def draw_multi_tauqgraph(tauss,qss,label):
+def draw_multi_tauqgraph(tauss,qss,label,title,leg_title):
     ###グラフの生成
     fig_tq = plt.figure()
-    ax_tq = fig_tq.add_subplot(111,title="ln(1/tau) vs ln(q)")
+    ax_tq = fig_tq.add_subplot(111,title=title)
 
     #散布図と曲線の準備
     for i in range(len(tauss)):
@@ -229,13 +236,15 @@ def draw_multi_tauqgraph(tauss,qss,label):
         
         #フィッティング曲線の描画
         #x軸刻み(最小オーダー、最大オーダー、プロット数)
-        q_axis = np.linspace(-5.7,-4.8,1000)
+        q_axis = np.linspace(15,16,1000)
         tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
         ax_tq.plot(q_axis, tau_fit, linewidth=1.3)
 
     #グラフのセット
     ax_tq.grid(True)
-    ax_tq.legend(fontsize=10,title="sample")
+    ax_tq.legend(fontsize=10,title=leg_title)
+    #ax_tq.set_xlim([-5.7,-4.8])
+    #ax_tq.set_ylim([-3.5,0])
     ax_tq.set_xlabel('log(q)', fontsize=12)
     ax_tq.set_ylabel('log(1/tau)', fontsize=12)
     #fig_tq.text(0.13,0.9,"gradient  " + str('{:.3g}'.format(param_opt[0])))
@@ -317,7 +326,7 @@ def analysisfordir(inputFileDirectory):
             tau = param_opt[3]
 
             #τの保存
-            taus = np.append(taus,tau)
+            taus = np.append(taus,tau * (10**-3))
             #角度の計算、保存
             q = calculating_q(angle)
             qs = np.append(qs,q)
@@ -343,7 +352,7 @@ def analysisfordir(inputFileDirectory):
         ###ラベル等の設定
         ax_corf.grid(True)
         ax_corf.legend(fontsize=10,title="angle")
-        ax_corf.set_ylim([0,1.3])
+        ax_corf.set_ylim([-0.1,1.3])
         ax_corf.set_xlabel('time (ms)', fontsize=12)
         ax_corf.set_ylabel('I', fontsize=12)
 
