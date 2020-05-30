@@ -25,9 +25,11 @@ ASC_DATA_END_ROW = 209
 ###メイン関数
 ###--------------------------------------------------------
 def main():
+    x = np.linspace(20,40,21)
+    y = np.array([500,500,500,500,500,500,500,500,500,500,562,579,400,310,250,130,10,7,5,2,1])
+    show_tauinv_t_graph(x,y,fitting=True,tc=30)
     
-    
-    taus1,qs1,temps1 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp25")
+    # taus1,qs1,temps1 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp25")
     
 ###--------------------------------------------------------
 ###フィッティング関数の定義
@@ -35,7 +37,7 @@ def main():
 def correlationFunction(x,a,b,beta,tau):
     return a*np.exp(-(x/tau)**beta) + b
 
-def tau_qFunction(x,a,b):
+def liner_function(x,a,b):
     return a*x + b
 
 ###--------------------------------------------------------
@@ -81,9 +83,21 @@ def nomalize(y_data):
 ###--------------------------------------------------------
 ###ASCファイルからデータを抽出し、NumPy配列で返す関数
 ###--------------------------------------------------------
-def getdata(inputDataFile):
+def getdata(input_data_file):
+    '''
+    ASCファイルからデータを抽出し、データをNumPy配列で返す関数
+
+    Parameters
+    ----------
+    input_data_file : string
+        ASCファイルの絶対パス
+    
+    Returns
+    -------
+    npdata : nparray
+    '''
     #ASCファイルを開く
-    datafile = open(inputDataFile)
+    datafile = open(input_data_file)
 
     #内容を行区切りでリストとして取得
     rawlist = datafile.readlines()
@@ -104,95 +118,25 @@ def getdata(inputDataFile):
 
     return npdata
 
+def show_tau_t_graph(temps,taus):
+    """
+    緩和時間vs温度のグラフを表示。
 
-###---------------------------------------------------------------------------
-###1/tauとqのlogを取り、そのグラフを描いて（インスタンス生成のみ、plotはしない）傾きを調べる関数
-###---------------------------------------------------------------------------
-def tauqgraph(taus,qs,inputFileDirectory):
-    #1/tau,qのlogを取る
-    taus_inv = np.log(1 / taus)
-    qs = np.log(qs)
+    Parameters
+    ----------
+    temps : nparray
+        温度の配列
+    taus : nparray
+        緩和時間配列
 
-    #フィッティング
-    init_parameter = [2,10]
-    param_opt, cov = curve_fit(tau_qFunction,qs,taus_inv,init_parameter)
-
-    ###グラフの生成
-    fig_tq = plt.figure()
-    ax_tq = fig_tq.add_subplot(111,title="ln(1/tau) vs ln(q)")
-
-    #生データのグラフの描画
-    ax_tq.scatter(qs,taus_inv,marker='o',s=8)
-    
-    #フィッティング曲線の描画
-    #x軸刻み(最小オーダー、最大オーダー、プロット数)
-    q_axis = np.linspace(15,16,1000)
-    tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
-    ax_tq.plot(q_axis, tau_fit, c="red", linewidth=1.3, label=inputFileDirectory)
-
-    #グラフのセット
-    ax_tq.grid(True)
-    ax_tq.set_xlabel('log(q)', fontsize=12)
-    ax_tq.set_ylabel('log(1/tau)', fontsize=12)
-    fig_tq.text(0.13,0.9,"gradient  " + str('{:.3g}'.format(param_opt[0])))
-    
-    #返り値は傾き
-    return param_opt[0]
-    
-###---------------------------------------------------------------------------
-###1/tauとqのlogを取り、そのグラフを重ねて描く関数（引数はnp.arrayのnp.array([[] []])）
-###---------------------------------------------------------------------------
-def draw_multi_tauqgraph(tauss,qss,label,title,leg_title):
-    ###グラフの生成
-    fig_tq = plt.figure()
-    ax_tq = fig_tq.add_subplot(111,title=title)
-
-    #散布図と曲線の準備
-    for i in range(len(tauss)):
-        taus = tauss[i]
-        qs = qss[i]
-
-        #1/tau,qのlogを取る
-        taus_inv = np.log(1 / taus)
-        qs = np.log(qs)
-
-        #フィッティング
-        init_parameter = [2,10]
-        param_opt, cov = curve_fit(tau_qFunction,qs,taus_inv,init_parameter)
-
-
-        #生データのグラフの描画
-        ax_tq.scatter(qs,taus_inv,marker='o',s=8,label=label[i])
-        
-        #フィッティング曲線の描画
-        #x軸刻み(最小オーダー、最大オーダー、プロット数)
-        q_width = calculating_q(12000)-calculating_q(6000)
-        q_axis = np.linspace(np.log(calculating_q(6000)-q_width*0.05), np.log(calculating_q(12000)+q_width*0.05), 1000)
-        tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
-        ax_tq.plot(q_axis, tau_fit, linewidth=1.3)
-
-    #グラフのセット
-    ax_tq.grid(True)
-    ax_tq.legend(fontsize=10,title=leg_title)
-    ax_tq.set_xlim([np.log(calculating_q(6000)-q_width*0.05), np.log(calculating_q(12000)+q_width*0.05)])
-    ax_tq.set_ylim([3.5,7])
-    ax_tq.set_xlabel('log(q)', fontsize=12)
-    ax_tq.set_ylabel('log(1/tau)', fontsize=12)
-    #fig_tq.text(0.13,0.9,"gradient  " + str('{:.3g}'.format(param_opt[0])))
-
-    plt.show()
-        
-###---------------------------------------------------------------------------
-###緩和時間(tau)と温度の関数
-###---------------------------------------------------------------------------
-def tau_tgraph(taus,temps):
+    """
     ###グラフの生成
     fig = plt.figure()
     ax = fig.add_subplot(111,title="tau vs temperature")
 
     #散布図
 
-    #生データのグラフの描画
+    #グラフの描画
     ax.scatter(temps,taus,marker='o',s=8)
 
     #グラフのセット
@@ -203,7 +147,57 @@ def tau_tgraph(taus,temps):
 
     plt.show()
 
+def show_tauinv_t_graph(temps,taus,fitting=False,tc=30.0):
+    """
+    緩和周波数vs温度のグラフを表示。オプションでフィッティングが可能。
 
+    Parameters
+    ----------
+    temps : ndarray
+        温度の配列
+    taus : ndarray
+        緩和時間配列
+    fitting : bool
+        フィッティングの有無（デフォルトでFalse）
+    tc : float
+        フィッティングの際の温度の閾値。これ以上のデータでフィッティングを行う。（デフォルトで30℃）
+
+    """
+    ###グラフの生成
+    fig = plt.figure()
+    ax = fig.add_subplot(111,title="tau vs temperature")
+
+    #生データグラフのセット
+    tauinvs = 1 / taus
+    ax.scatter(temps,tauinvs,marker='o',s=8)
+
+    if(fitting):
+        for i,t in enumerate(temps):
+            if(t>tc):
+                x_data = temps[i:]
+                y_data = tauinvs[i:]
+        
+                break
+        
+        #フィッティング
+        init_parameter = [0,0]
+        param_opt, cov = curve_fit(liner_function,x_data,y_data,init_parameter)
+
+        a = param_opt[0]
+        b = param_opt[1]
+
+        x_axis = np.linspace(temps[0],temps[-1],1000)
+        y_fit = liner_function(x_axis,a,b)
+        ax.plot(x_axis, y_fit, linewidth=1.3)
+
+
+    #グラフ設定と表示
+    ax.grid(True)
+    ax.legend(fontsize=10,title="sample")
+    ax.set_xlabel('temperature', fontsize=12)
+    ax.set_ylabel('relaxation time[ms]', fontsize=12)
+
+    plt.show()
 
 def analysisfordir(inputFileDirectory):
     """
@@ -216,20 +210,20 @@ def analysisfordir(inputFileDirectory):
 
     Returns
     -------
-    taus : nparray
+    taus : ndarray
         緩和時間の配列
-    qs : nparray
+    qs : ndarray
         散乱ベクトルの配列
-    temps : nparray
+    temps : ndarray
         温度の配列
     """
 
     ###ファイル読み込み-----------------------------------------
     #データASCファイルへのパスをすべて読み込み
-    inputDataFiles = glob.glob(os.path.join(inputFileDirectory,"*.ASC"))
-    #温度でソート
-    inputDataFiles.sort(key=lambda s: int(re.sub(".ASC","",re.sub(inputFileDirectory + "\\\\","",s)).split("_")[0]))
-    print(inputDataFiles)
+    input_data_files = glob.glob(os.path.join(inputFileDirectory,"*.ASC"))
+
+    #ファイルの順番を温度でソート、配列の番号を変えれば他のパラメーターでもソート可能
+    input_data_files.sort(key=lambda s: int(re.sub(".ASC","",re.sub(inputFileDirectory + "\\\\","",s)).split("_")[0]))
 
     #結果格納用の配列
     taus = np.empty(0)
@@ -241,22 +235,19 @@ def analysisfordir(inputFileDirectory):
     ax_corf = fig_corf.add_subplot(111,title="Correlataion Function")
 
     #各ASCについて解析-------------------------------------------------------------
-    for inputDataFile in inputDataFiles:
+    for input_data_file in input_data_files:
         #ファイル名から各パラメーターを取得（angle_temp_closs_time_name.ASC）
-        filename = re.sub(".ASC","",re.sub(inputFileDirectory + "\\\\","",inputDataFile)) #ファイル名取り出し（パスの部分と拡張子を除去）
+        filename = re.sub(".ASC","",re.sub(inputFileDirectory + "\\\\","",input_data_file)) #ファイル名取り出し（パスの部分と拡張子を除去）
         input_parameters = filename.split("_") #パラメータを取得
 
-        
-        
         #取得パラメータ
         angle = float(input_parameters[0])
         temperature = float(input_parameters[1])
         time = float(input_parameters[3])
         sample_name = input_parameters[4]
         
-
         #データセット
-        data = getdata(inputDataFile)
+        data = getdata(input_data_file)
         x_data = data[:,0]
         y_data = data[:,1]
         init_parameter = [1,0,1,1]
@@ -266,6 +257,7 @@ def analysisfordir(inputFileDirectory):
         
         #フィッティング曲線表示のフラグ
         plot_fittingcurve = True
+
         ###自己相関関数のフィッティング-----------------------------------------------
         #フィッティングが失敗したときは例外処理を施し、生データのみプロットする
         try:
