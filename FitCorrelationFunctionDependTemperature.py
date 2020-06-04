@@ -13,9 +13,12 @@ import re
 
 
 ###定数定義
-#波長[nm]
+#波長(nm)
 LAMBDA = 532
+#屈折率
 REFRACTIVE_INDEX = 1.33
+#ボルツマン定数
+BOLTZMANN_CONST = 1.380649 * 10**(-23) 
 #ASCファイルにおけるデータ行の開始と終わり
 ASC_DATA_START_ROW = 27
 ASC_DATA_END_ROW = 209
@@ -25,11 +28,11 @@ ASC_DATA_END_ROW = 209
 ###メイン関数
 ###--------------------------------------------------------
 def main():
-    x = np.linspace(20,40,21)
-    y = np.array([500,500,500,500,500,500,500,500,500,500,562,579,400,310,250,130,10,7,5,2,1])
-    show_tauinv_t_graph(x,y,fitting=True,tc=30)
     
-    # taus1,qs1,temps1 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp25")
+    taus,qs,temps = analysisfordir("/KUniv/Q10/data/200604/latex")
+    x = calculating_particle_size(taus,qs,temps)
+    print(np.sum(x)/x.size)
+    
     
 ###--------------------------------------------------------
 ###フィッティング関数の定義
@@ -56,6 +59,35 @@ def cutdata(y_data,threshold):
 def calculating_q(angle):
     theta = angle * 18 / 6000 #6000 = 18°
     return 4 * np.pi * REFRACTIVE_INDEX * np.sin(np.deg2rad(theta)/2) / (LAMBDA * (10**-9)) #散乱ベクトルの大きさ
+
+def calculating_particle_size(taus,qs,temps):
+    '''
+    粒子サイズを求める関数。VV測定の結果に対して用いることができる。
+
+    Parameters
+    ----------
+    taus : ndarray
+        緩和時間（s）
+    temps : ndarray
+        温度（摂氏）
+    qs : ndaaray
+        散乱ベクトルの大きさ
+    
+    Returns
+    -------
+    particle_size : nparray
+        粒子の流体力学半径（m）
+    '''
+    # 温度をケルビンに直す
+    temps = temps + 273.15
+    # 粘度（20℃の水がおよそ1）
+    eta = 0.89 * 10**(-3)
+
+    # 並進拡散定数
+    D = 1 / (2 * taus * qs**2)
+
+    return (BOLTZMANN_CONST * temps) / (6 * np.pi * eta * D)
+
 
 ###--------------------------------------------------------
 ###自己相関関数の規格化
@@ -211,7 +243,7 @@ def analysisfordir(inputFileDirectory):
     Returns
     -------
     taus : ndarray
-        緩和時間の配列
+        緩和時間(s)の配列
     qs : ndarray
         散乱ベクトルの配列
     temps : ndarray
