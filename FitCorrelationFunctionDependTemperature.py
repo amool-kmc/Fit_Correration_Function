@@ -11,7 +11,6 @@ import re
 # (角度パラメーター値)_(摂氏温度x10)_(偏光板配置)_(測定時間)_(サンプルの名前).ASC
 # *****************************
 
-
 ###定数定義
 #波長(nm)
 LAMBDA = 532
@@ -21,17 +20,16 @@ REFRACTIVE_INDEX = 1.33
 BOLTZMANN_CONST = 1.380649 * 10**(-23) 
 #ASCファイルにおけるデータ行の開始と終わり
 ASC_DATA_START_ROW = 27
-ASC_DATA_END_ROW = 209
+ASC_DATA_END_ROW = 217
 
 
-###--------------------------------------------------------
-###メイン関数
-###--------------------------------------------------------
 def main():
-    
-    taus,qs,temps = analysisfordir("/KUniv/Q10/data/200604/latex")
-    x = calculating_particle_size(taus,qs,temps)
-    print(np.sum(x)/x.size)
+    '''
+    メイン関数
+
+    '''
+    taus,qs,temps = analysisfordir("/KUniv/Q10/data/200610/lyotemp")
+    show_tauinv_t_graph(temps,taus,True,tc=33.3)
     
     
 ###--------------------------------------------------------
@@ -53,10 +51,20 @@ def cutdata(y_data,threshold):
         elif(y_data[i] <= threshold):
             y_data[i] = 0
 
-###--------------------------------------------------------
-###散乱ベクトルを計算する関数
-###--------------------------------------------------------
 def calculating_q(angle):
+    '''
+    散乱ベクトルを計算する関数
+
+    Parameters
+    ----------
+    angle : float
+        DLS装置での角度パラメーターの値
+    
+    Returns
+    -------
+    q : float
+        散乱ベクトルの大きさ
+    '''
     theta = angle * 18 / 6000 #6000 = 18°
     return 4 * np.pi * REFRACTIVE_INDEX * np.sin(np.deg2rad(theta)/2) / (LAMBDA * (10**-9)) #散乱ベクトルの大きさ
 
@@ -75,19 +83,18 @@ def calculating_particle_size(taus,qs,temps):
     
     Returns
     -------
-    particle_size : nparray
+    particle_size : ndarray
         粒子の流体力学半径（m）
     '''
     # 温度をケルビンに直す
     temps = temps + 273.15
-    # 粘度（20℃の水がおよそ1）
+    # 粘度（20℃の水がおよそ10**-3）
     eta = 0.89 * 10**(-3)
 
     # 並進拡散定数
     D = 1 / (2 * taus * qs**2)
 
     return (BOLTZMANN_CONST * temps) / (6 * np.pi * eta * D)
-
 
 ###--------------------------------------------------------
 ###自己相関関数の規格化
@@ -112,9 +119,6 @@ def nomalize(y_data):
 
     return new_y
 
-###--------------------------------------------------------
-###ASCファイルからデータを抽出し、NumPy配列で返す関数
-###--------------------------------------------------------
 def getdata(input_data_file):
     '''
     ASCファイルからデータを抽出し、データをNumPy配列で返す関数
@@ -151,7 +155,7 @@ def getdata(input_data_file):
     return npdata
 
 def show_tau_t_graph(temps,taus):
-    """
+    '''
     緩和時間vs温度のグラフを表示。
 
     Parameters
@@ -161,7 +165,7 @@ def show_tau_t_graph(temps,taus):
     taus : nparray
         緩和時間配列
 
-    """
+    '''
     ###グラフの生成
     fig = plt.figure()
     ax = fig.add_subplot(111,title="tau vs temperature")
@@ -169,7 +173,7 @@ def show_tau_t_graph(temps,taus):
     #散布図
 
     #グラフの描画
-    ax.scatter(temps,taus,marker='o',s=8)
+    ax.scatter(temps,taus*1000,marker='o',s=8)
 
     #グラフのセット
     ax.grid(True)
@@ -180,7 +184,7 @@ def show_tau_t_graph(temps,taus):
     plt.show()
 
 def show_tauinv_t_graph(temps,taus,fitting=False,tc=30.0):
-    """
+    '''
     緩和周波数vs温度のグラフを表示。オプションでフィッティングが可能。
 
     Parameters
@@ -193,14 +197,14 @@ def show_tauinv_t_graph(temps,taus,fitting=False,tc=30.0):
         フィッティングの有無（デフォルトでFalse）
     tc : float
         フィッティングの際の温度の閾値。これ以上のデータでフィッティングを行う。（デフォルトで30℃）
+    '''
 
-    """
     ###グラフの生成
     fig = plt.figure()
     ax = fig.add_subplot(111,title="tau vs temperature")
 
     #生データグラフのセット
-    tauinvs = 1 / taus
+    tauinvs = 1 / (taus*1000)
     ax.scatter(temps,tauinvs,marker='o',s=8)
 
     if(fitting):
@@ -218,21 +222,33 @@ def show_tauinv_t_graph(temps,taus,fitting=False,tc=30.0):
         a = param_opt[0]
         b = param_opt[1]
 
-        x_axis = np.linspace(temps[0],temps[-1],1000)
+        #転移点を探し（二分木）、フィッティング線の描く範囲を決定
+        tc_error = 0.01
+        topside = 50
+        underside = 10
+        while(1):
+            serchpoint = (topside + underside)/2
+            if(liner_function(serchpoint,a,b)<0 and liner_function(serchpoint + tc_error,a,b)>0):
+                x_axis = np.linspace(serchpoint,temps[-1],1000)
+                break
+            elif(liner_function(serchpoint + tc_error,a,b) < 0):
+                underside = serchpoint + tc_error
+            elif(liner_function(serchpoint,a,b) > 0):
+                topside = serchpoint
+
         y_fit = liner_function(x_axis,a,b)
         ax.plot(x_axis, y_fit, linewidth=1.3)
-
 
     #グラフ設定と表示
     ax.grid(True)
     ax.legend(fontsize=10,title="sample")
     ax.set_xlabel('temperature', fontsize=12)
-    ax.set_ylabel('relaxation time[ms]', fontsize=12)
+    ax.set_ylabel('relaxation frequency[1/ms]', fontsize=12)
 
     plt.show()
 
 def analysisfordir(inputFileDirectory):
-    """
+    '''
     指定ディレクトリ内のASCファイルを解析し、自己相関関数のフィッティングを行う。
 
     Parameters
@@ -248,7 +264,7 @@ def analysisfordir(inputFileDirectory):
         散乱ベクトルの配列
     temps : ndarray
         温度の配列
-    """
+    '''
 
     ###ファイル読み込み-----------------------------------------
     #データASCファイルへのパスをすべて読み込み
@@ -314,9 +330,6 @@ def analysisfordir(inputFileDirectory):
             print(angle," fitting failed")
             plot_fittingcurve = False
 
-
-        
-
         ###グラフの表示----------------------------------------------------
         #生データ
         ax_corf.scatter(x_data,y_data,marker='o',s=2,label=str('{:.3g}'.format(angle*18./6000.)))
@@ -338,7 +351,6 @@ def analysisfordir(inputFileDirectory):
         #logscaleに
         setting1 = plt.gca()
         setting1.set_xscale('log')
-
         
     plt.show()
     
