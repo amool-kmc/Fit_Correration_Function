@@ -7,91 +7,37 @@ import glob
 import re
 
 ###定数定義
-#波長[nm]
+#波長
 LAMBDA = 532
-REFRACTIVE_INDEX = 1.33
 #ASCファイルにおけるデータ行の開始と終わり
 ASC_DATA_START_ROW = 27
-ASC_DATA_END_ROW = 209
+ASC_DATA_END_ROW = 217
 
 
 ###--------------------------------------------------------
 ###メイン関数
 ###--------------------------------------------------------
 def main():
-    
-    #'''
-    #taus1,qs1 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp25")
-    taus2,qs2 = analysisfordir("/KUniv/Q10/200213/lyo_temp27")
-    taus3,qs3 = analysisfordir("/KUniv/Q10/200213/lyo_temp29")
-    taus4,qs4 = analysisfordir("/KUniv/Q10/200213/lyo_temp31")
-    taus5,qs5 = analysisfordir("/KUniv/Q10/200213/lyo_temp33")
-    #taus6,qs6 = analysisfordir("/KUniv/Q10/200217/lyovv_temp35")
-    #taus7,qs7 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp37")
-    #'''
-
-
-    
-    
     '''
-    taus1,qs1 = analysisfordir("/KUniv/Q10/200213/lyo_temp27")
-    taus2,qs2 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp27")
-    
-    taus3,qs3 = analysisfordir("/KUniv/Q10/200213/lyo_temp29")
-    taus4,qs4 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp29")
-
-    taus5,qs5 = analysisfordir("/KUniv/Q10/200213/lyo_temp31")
-    taus6,qs6 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp31")
-    
-    taus7,qs7 = analysisfordir("/KUniv/Q10/200213/lyo_temp33")
-    taus8,qs8 = analysisfordir("/KUniv/Q10/200212/agalyo05_temp33")
+    taus1,qs1 = analysisfordir("/KUniv/Q10/200123/lyo_temp33")
+    taus2,qs2 = analysisfordir("/KUniv/Q10/200123/lyo_temp35")
+    taus3,qs3 = analysisfordir("/KUniv/Q10/200123/lyo_temp36")
+    taus4,qs4 = analysisfordir("/KUniv/Q10/200123/lyo_temp37")
+    taus5,qs5 = analysisfordir("/KUniv/Q10/200123/lyo_temp38")
+    taus6,qs6 = analysisfordir("/KUniv/Q10/200123/lyo_temp40")
+    taus7,qs7 = analysisfordir("/KUniv/Q10/200123")
     '''
+    taus8,qs8 = analysisfordir("/KUniv/Q10/200124/agalyo_temp33")
+    taus9,qs9 = analysisfordir("/KUniv/Q10/200124/agalyo_temp35")
+    #analysisfordir("/KUniv/Q10/191029asc/32deg")
+    #analysisfordir("/KUniv/Q10/191029asc/34deg")
 
-    
     #tau-qグラフを重ねて描画
-    #'''
-    #tauss = np.array([taus1,taus2,taus3,taus4,taus5,taus6])
-    tauss = np.array([taus2,taus3,taus4,taus5])
-    #qss = np.array([qs1,qs2,qs3,qs4,qs5,qs6])
-    qss = np.array([qs2,qs3,qs4,qs5])
-    label = ["27","29","31","33"]
-    #label = ["27","29","31","33","35"]
-    title="VH lyotropic"
-    draw_multi_tauqgraph(tauss,qss,label,title,"temperature")
-    #'''
-
     '''
     tauss = np.array([taus1,taus2])
     qss = np.array([qs1,qs2])
-    label = ["lyo","aga + lyo"]
-    title = "VH 27℃"
-    leg_title = "sample"
-    draw_multi_tauqgraph(tauss,qss,label,title,leg_title)
-
-    tauss = np.array([taus3,taus4])
-    qss = np.array([qs3,qs4])
-    title = "VH 29℃"
-    draw_multi_tauqgraph(tauss,qss,label,title,leg_title)
-
-    tauss = np.array([taus5,taus6])
-    qss = np.array([qs5,qs6])
-    title = "VH 31℃"
-    draw_multi_tauqgraph(tauss,qss,label,title,leg_title)
-
-    tauss = np.array([taus7,taus8])
-    qss = np.array([qs7,qs8])
-    title = "VH 33℃"
-    draw_multi_tauqgraph(tauss,qss,label,title,leg_title)
-    '''
-    
-
-
-    #tau-temp
-    '''
-    taus = np.array([taus1[1],taus2[1],taus3[1],taus4[1],taus5[1]])
-    temp = np.array([27,29,31,33,35])
-    
-    tau_tgraph(taus,temp)
+    label = ["agalyo","lyo"]
+    draw_multi_tauqgraph(tauss,qss,label)
     '''
 
 ###--------------------------------------------------------
@@ -118,30 +64,7 @@ def cutdata(y_data,threshold):
 ###--------------------------------------------------------
 def calculating_q(angle):
     theta = angle * 18 / 6000 #6000 = 18°
-    return 4 * np.pi * REFRACTIVE_INDEX * np.sin(np.deg2rad(theta)/2) / (LAMBDA * (10**-9)) #散乱ベクトルの大きさ
-
-###--------------------------------------------------------
-###自己相関関数の規格化
-###--------------------------------------------------------
-def nomalize(y_data):
-    #平均から最大値を算出
-    max_cont = 30
-    max_tot = 0
-    for i in range(max_cont):
-        max_tot += y_data[i]
-    max_ave = max_tot / max_cont
-
-    #平均から最小値を算出
-    min_cont = 30
-    min_tot = 0
-    for i in range(min_cont):
-        min_tot += y_data[-i]
-    min_ave = min_tot / min_cont
-
-    #規格化
-    new_y = (y_data - min_ave) / (max_ave - min_ave)
-
-    return new_y
+    return 4 * np.pi * np.sin(np.deg2rad(theta)/2) / LAMBDA #散乱ベクトルの大きさ
 
 ###--------------------------------------------------------
 ###ASCファイルからデータを抽出し、NumPy配列で返す関数
@@ -191,7 +114,7 @@ def tauqgraph(taus,qs,inputFileDirectory):
     
     #フィッティング曲線の描画
     #x軸刻み(最小オーダー、最大オーダー、プロット数)
-    q_axis = np.linspace(15,16,1000)
+    q_axis = np.linspace(-5.7,-4.8,1000)
     tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
     ax_tq.plot(q_axis, tau_fit, c="red", linewidth=1.3, label=inputFileDirectory)
 
@@ -207,10 +130,10 @@ def tauqgraph(taus,qs,inputFileDirectory):
 ###---------------------------------------------------------------------------
 ###1/tauとqのlogを取り、そのグラフを重ねて描く関数（引数はnp.arrayのnp.array([[] []])）
 ###---------------------------------------------------------------------------
-def draw_multi_tauqgraph(tauss,qss,label,title,leg_title):
+def draw_multi_tauqgraph(tauss,qss,label):
     ###グラフの生成
     fig_tq = plt.figure()
-    ax_tq = fig_tq.add_subplot(111,title=title)
+    ax_tq = fig_tq.add_subplot(111,title="ln(1/tau) vs ln(q)")
 
     #散布図と曲線の準備
     for i in range(len(tauss)):
@@ -231,42 +154,20 @@ def draw_multi_tauqgraph(tauss,qss,label,title,leg_title):
         
         #フィッティング曲線の描画
         #x軸刻み(最小オーダー、最大オーダー、プロット数)
-        q_width = calculating_q(12000)-calculating_q(6000)
-        q_axis = np.linspace(np.log(calculating_q(6000)-q_width*0.05), np.log(calculating_q(12000)+q_width*0.05), 1000)
+        q_axis = np.linspace(-5.7,-4.8,1000)
         tau_fit = tau_qFunction(q_axis,param_opt[0],param_opt[1])
         ax_tq.plot(q_axis, tau_fit, linewidth=1.3)
 
     #グラフのセット
     ax_tq.grid(True)
-    ax_tq.legend(fontsize=10,title=leg_title)
-    ax_tq.set_xlim([np.log(calculating_q(6000)-q_width*0.05), np.log(calculating_q(12000)+q_width*0.05)])
-    ax_tq.set_ylim([3.5,7])
+    ax_tq.legend(fontsize=10,title="sample")
     ax_tq.set_xlabel('log(q)', fontsize=12)
     ax_tq.set_ylabel('log(1/tau)', fontsize=12)
     #fig_tq.text(0.13,0.9,"gradient  " + str('{:.3g}'.format(param_opt[0])))
 
     plt.show()
         
-###---------------------------------------------------------------------------
-###緩和時間(tau)と温度の関数
-###---------------------------------------------------------------------------
-def tau_tgraph(taus,temps):
-    ###グラフの生成
-    fig = plt.figure()
-    ax = fig.add_subplot(111,title="tau vs temperature")
-
-    #散布図
-
-    #生データのグラフの描画
-    ax.scatter(temps,taus,marker='o',s=8)
-
-    #グラフのセット
-    ax.grid(True)
-    ax.legend(fontsize=10,title="sample")
-    ax.set_xlabel('temperature', fontsize=12)
-    ax.set_ylabel('relaxation time[ms]', fontsize=12)
-
-    plt.show()
+        
 
 
 ###--------------------------------------------------------
@@ -303,12 +204,9 @@ def analysisfordir(inputFileDirectory):
         x_data = data[:,0]
         y_data = data[:,1]
         init_parameter = [1,0,1,1]
-
-        #データの規格化
-        y_data = nomalize(y_data)
         
         #フィッティング曲線表示のフラグ
-        plot_fittingcurve = True
+        plot_fittingcurve = False
         ###自己相関関数のフィッティング-----------------------------------------------
         #フィッティングが失敗したときは例外処理を施し、生データのみプロットする
         try:
@@ -322,7 +220,7 @@ def analysisfordir(inputFileDirectory):
             tau = param_opt[3]
 
             #τの保存
-            taus = np.append(taus,tau * (10**-3))
+            taus = np.append(taus,tau)
             #角度の計算、保存
             q = calculating_q(angle)
             qs = np.append(qs,q)
@@ -348,9 +246,9 @@ def analysisfordir(inputFileDirectory):
         ###ラベル等の設定
         ax_corf.grid(True)
         ax_corf.legend(fontsize=10,title="angle")
-        ax_corf.set_ylim([-0.1,1.3])
+        ax_corf.set_ylim([0,1])
         ax_corf.set_xlabel('time (ms)', fontsize=12)
-        ax_corf.set_ylabel('f', fontsize=12)
+        ax_corf.set_ylabel('I', fontsize=12)
 
         #logscaleに
         setting1 = plt.gca()
