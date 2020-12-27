@@ -22,47 +22,18 @@ BOLTZMANN_CONST = 1.380649 * 10**(-23)
 ASC_DATA_START_ROW = 40
 ASC_DATA_END_ROW = 217
 #ウインドウサイズ
-WINDOW_SIZE = (8.0,6.0)
+WINDOW_SIZE = (5.5,4.0)
 
 def main():
     '''
     メイン関数
 
+    解析テンプレート:
+    taus, qs, temps = analysisfordir("完全パス")
+    show_graph(temps, tau*10**3, xlabel="temperature [℃]", ylabel="relaxation time [ms]", title="tau vs temp")
+    show_tauinv_t_graph(temp, tau, fitting=False, tc=34)
     '''
-    taus1,qs1,temps1 = analysisfordir("/KUniv/Q10/data/201106/lyo1")
-    taus2,qs2,temps2 = analysisfordir("/KUniv/Q10/data/201108/lyo2")
-    taus3,qs3,temps3 = analysisfordir("/KUniv/Q10/data/201111/lyo3")
-
-    array1 = [taus1,qs1,temps1]
-    array2 = [taus2,qs2,temps2]
-    array3 = [taus3,qs3,temps3]
     
-    data_array = [array1,array2,array3]
-
-    iterator = [0,0,0]
-    now_temp = 300
-
-    temp = np.empty(0)
-    avl_tau = np.empty(0)
-    while(now_temp < 400):
-        match_num = 0
-        value_sum = 0
-        for i,array in enumerate(data_array):
-            #温度があるかチェック
-            if(array[2][iterator[i]]*10 == now_temp):
-                value_sum += array[0][iterator[i]]
-                match_num += 1
-                if(iterator[i] != len(array[2])-1):
-                    iterator[i] += 1
-        
-        if(match_num > 0):
-            avl_tau = np.append(avl_tau,value_sum/match_num)
-            temp = np.append(temp,now_temp/10)
-
-        now_temp += 2
-    
-    show_graph(temp,avl_tau*10**3,xlabel="tempelature [℃]",ylabel="relaxation time [ms]",title="tau vs temp")
-    print(show_tauinv_t_graph(temp,avl_tau,fitting=False,tc=34))
 
 ###--------------------------------------------------------
 ###フィッティング関数の定義
@@ -99,6 +70,54 @@ def calculating_q(angle):
     '''
     theta = angle * 18 / 6000 #6000 = 18°
     return 4 * np.pi * REFRACTIVE_INDEX * np.sin(np.deg2rad(theta)/2) / (LAMBDA * (10**-9)) #散乱ベクトルの大きさ
+
+def averaging(data_array,x_delta,x_min,x_max):
+    '''
+    yの平均を求める関数
+    デルタのあり方に注意。（誤差がでる）
+
+    Parameters
+    ----------
+    data_array : array
+        使用例:
+        # array1 = [x_array1, y_array1]
+        # array1 = [x_array2, y_array2]
+        # array3 = [x_array3, y_array3]
+        # data_array = [array1,array2,array3]
+        # x_array, avl_y_array = averaging(data_array, dx, minx, maxx)
+        
+        要素はnp配列。同じxについてyを平均化
+
+    Returns
+    -------
+    x_array : ndarray
+    value_avl : ndarray
+    '''
+    iterator = np.zeros(len(data_array),dtype='int')
+    x_array = np.empty(0)
+    value_avl = np.empty(0)
+
+    x = x_min
+    while(x < x_max):
+        match_num = 0
+        value_sum = 0
+        # 各データセットを走査
+        for i,array in enumerate(data_array):
+            # 各データセットについてxの存在をチェック
+            if(x - x_delta/2 <= array[0][iterator[i]] and array[0][iterator[i]] <= now_x + x_delta/2):
+                value_sum += array[1][iterator[i]]
+                match_num += 1
+                if(iterator[i] != len(array[0])-1):
+                    iterator[i] += 1
+        
+        if(match_num > 0):
+            value_avl = np.append(value_avl,value_sum/match_num)
+            x_array = np.append(x_array,x)
+
+        x += x_delta
+        print(x)
+
+    return x_array,value_avl
 
 def calculating_particle_size(taus,qs,temps):
     '''
@@ -213,19 +232,19 @@ def show_graph(xdata,ydata,xlabel="x",ylabel="y",title=""):
     #グラフの描画
     print(len(xdata))
     print(len(ydata))
-    ax.scatter(xdata,ydata,marker='o',s=25)
+    ax.scatter(xdata,ydata,marker='o',s=20)
     #グラフの範囲指定
     ax.set_xlim([30,40])
     ax.set_ylim([0,50])
 
     #目盛り文字サイズ
-    ax.tick_params(labelsize = 20)
+    ax.tick_params(labelsize = 10)
 
     #グラフのセット
     ax.grid(True,linestyle="--")
     #ax.legend(fontsize=10,title="sample")
-    ax.set_xlabel(xlabel, fontsize=15)
-    ax.set_ylabel(ylabel, fontsize=15)
+    ax.set_xlabel(xlabel, fontsize=10)
+    ax.set_ylabel(ylabel, fontsize=10)
 
     plt.show()
 
@@ -248,16 +267,16 @@ def show_tau_t_graph(temps,taus):
     #散布図
 
     #グラフの描画
-    ax.scatter(temps,taus*1000,marker='o',s=25)
+    ax.scatter(temps,taus*1000,marker='o',s=20)
     
 
     #グラフのセット
     ax.grid(True)
     #ax.legend(fontsize=10,title="sample")
     #目盛り文字サイズ
-    ax.tick_params(labelsize = 20)
-    ax.set_xlabel('temperature', fontsize=15)
-    ax.set_ylabel('relaxation time[ms]', fontsize=15)
+    ax.tick_params(labelsize = 10)
+    ax.set_xlabel('temperature', fontsize=10)
+    ax.set_ylabel('relaxation time[ms]', fontsize=10)
 
     plt.show()
 
@@ -288,7 +307,7 @@ def show_tauinv_t_graph(temps,taus,fitting=False,tc=30.0):
     fig.suptitle("tauinv vs temperature", size=18, weight=2)
     #生データグラフのセット
     tauinvs = 1 / (taus*1000)
-    ax.scatter(temps,tauinvs,marker='o',s=25)
+    ax.scatter(temps,tauinvs,marker='o',s=20)
 
     if(fitting):
         for i,t in enumerate(temps):
@@ -333,9 +352,9 @@ def show_tauinv_t_graph(temps,taus,fitting=False,tc=30.0):
     ax.grid(True)
     ax.legend(fontsize=10,title="sample")
     #目盛り文字サイズ
-    ax.tick_params(labelsize = 20)
-    ax.set_xlabel('temperature [℃]', fontsize=15)
-    ax.set_ylabel('relaxation frequency [1/ms]', fontsize=15)
+    ax.tick_params(labelsize = 10)
+    ax.set_xlabel('temperature [℃]', fontsize=10)
+    ax.set_ylabel('relaxation frequency [1/ms]', fontsize=10)
 
     plt.show()
 
