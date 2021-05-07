@@ -19,7 +19,6 @@ ASC_DATA_END_ROW = 209
 ###メイン関数
 ###--------------------------------------------------------
 def main():
-    
     #'''
     #taus1,qs1 = analysisfordir("/KUniv/Q10/200220/agalyovh_temp25")
     taus2,qs2 = analysisfordir("/KUniv/Q10/200213/lyo_temp27")

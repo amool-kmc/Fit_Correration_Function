@@ -1,10 +1,12 @@
+import glob
+import os
+import re
+import math
+
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import curve_fit
 import pandas as pd
-import os
-import glob
-import re
+from scipy.optimize import curve_fit
 
 # *****************************
 # ASCファイル名 命名規則
@@ -19,8 +21,8 @@ REFRACTIVE_INDEX = 1.33
 #ボルツマン定数
 BOLTZMANN_CONST = 1.380649 * 10**(-23) 
 #ASCファイルにおけるデータ行の開始と終わり(27,217デフォルト)
-ASC_DATA_START_ROW = 40
-ASC_DATA_END_ROW = 217
+ASC_DATA_START_ROW = 30
+ASC_DATA_END_ROW = 244
 #ウインドウサイズ
 WINDOW_SIZE = (5.5,4.0)
 
@@ -29,10 +31,24 @@ def main():
     メイン関数
 
     解析テンプレート:
-    taus, qs, temps = analysisfordir("完全パス")
-    show_graph(temps, tau*10**3, xlabel="temperature [℃]", ylabel="relaxation time [ms]", title="tau vs temp")
-    show_tauinv_t_graph(temp, tau, fitting=False, tc=34)
+    result = analysisfordir("/KUniv/Q10/data/210119/latex",correlationFunction,[1,0,1,1],True)
+    show_graph([d.get('temp') for d in result], np.array([d.get('fitparam') for d in result])[:,2], [30,36], [0,2],xlabel="temperature [℃]", ylabel="beta", title="beta vs temp")
+    show_graph([d.get('temp') for d in result], np.array([d.get('fitparam') for d in result])[:,3], [30,36], [0,70],xlabel="temperature [℃]", ylabel="relaxation time [ms]", title="tau vs temp")
     '''
+    
+    result = analysisfordir("/KUniv/Q10/data/210119/latex",lambda x,a,b,tau: a*np.exp(-(x/tau)) + b,[1,0,1],True,lambda param: param%10 != 0)
+    # show_graph([d.get('temp') for d in result], np.array([d.get('fitparam') for d in result])[:,2], [30,36], [0,2],xlabel="temperature [℃]", ylabel="beta", title="beta vs temp")
+    show_graph([d.get('temp') for d in result], np.array([d.get('fitparam') for d in result])[:,2], [30,36], [0,70],xlabel="temperature [℃]", ylabel="relaxation time [ms]", title="tau vs temp")
+
+    # taus1, taus2, betas1, betas2, qs, temps = analysisfordir2("/KUniv/Q10/data/210420/latexlyo",True)
+    # show_graph(temps, taus1*10**3, [28,36], [0,25],xlabel="temperature [℃]", ylabel="relaxation time [ms]", title="tau vs temp")
+    # show_graph(temps, betas1, [28,36], [0,2],xlabel="temperature [℃]", ylabel="beta", title="beta vs temp")
+
+    # show_graph(temps, taus2*10**3, xlabel="temperature [℃]", ylabel="relaxation time [ms]", title="tau vs temp")
+    # taus2, qs2, temps2 = analysisfordir("/KUniv/Q10/data/210209/lyo_sampled",False)
+    # x,y = averaging([[temps, taus],[temps2, taus2]],0.2,30,36)
+    # show_graph(x, y*10**3, xlabel="temperature [℃]", ylabel="relaxation time [ms]", title="tau vs temp")
+    # show_graph(temps,calculating_particle_size(taus,qs,temps)*10**9)
     
 
 ###--------------------------------------------------------
@@ -40,6 +56,12 @@ def main():
 ###--------------------------------------------------------
 def correlationFunction(x,a,b,beta,tau):
     return a*np.exp(-(x/tau)**beta) + b
+
+def correlationFunctionBetaOne(x,a,b,tau):
+    return a*np.exp(-(x/tau)) + b
+
+def double_correlation_function(x,a1,beta1,tau1,a2,beta2,tau2,b):
+    return a1*np.exp(-(x/tau1)**beta1) + a2*np.exp(-(x/tau2)**beta2) + b
 
 def liner_function(x,a,b):
     return a*x + b
@@ -104,7 +126,7 @@ def averaging(data_array,x_delta,x_min,x_max):
         # 各データセットを走査
         for i,array in enumerate(data_array):
             # 各データセットについてxの存在をチェック
-            if(x - x_delta/2 <= array[0][iterator[i]] and array[0][iterator[i]] <= now_x + x_delta/2):
+            if(x - x_delta/2 <= array[0][iterator[i]] and array[0][iterator[i]] <= x + x_delta/2):
                 value_sum += array[1][iterator[i]]
                 match_num += 1
                 if(iterator[i] != len(array[0])-1):
@@ -165,6 +187,7 @@ def nomalize(y_data):
         min_tot += y_data[-i]
     min_ave = min_tot / min_cont
 
+    
     #規格化
     new_y = (y_data - min_ave) / (max_ave - min_ave)
 
@@ -188,7 +211,7 @@ def getdata(input_data_file):
 
     #内容を行区切りでリストとして取得
     rawlist = datafile.readlines()
-
+    
     #return用の配列
     npdata = np.empty((0,2), float)
 
@@ -197,15 +220,15 @@ def getdata(input_data_file):
         if(ASC_DATA_START_ROW <= i and i <= ASC_DATA_END_ROW): #データ行の指定（30秒なら27~217）
             #データ行をtab区切りで分割しNumPy配列に
             npline = np.array(rawline.split(), dtype = float)
-
+            
             #2次元NumPy配列として格納（[[time, value]]）
-            npdata = np.append(npdata, [npline], axis = 0)
+            npdata = np.append(npdata, [npline[0:2]], axis = 0)
 
     datafile.close()
 
     return npdata
 
-def show_graph(xdata,ydata,xlabel="x",ylabel="y",title=""):
+def show_graph(xdata,ydata,x_range,y_range,xlabel="x",ylabel="y",title=""):
     '''
     二次元グラフを表示。
 
@@ -215,6 +238,8 @@ def show_graph(xdata,ydata,xlabel="x",ylabel="y",title=""):
         横軸データの配列
     ydata : nparray
         縦軸データの配列
+    x_range : ndarray
+    y_range : ndarray
     xlabel : string
         横軸ラベル
     ylabel : string
@@ -230,12 +255,13 @@ def show_graph(xdata,ydata,xlabel="x",ylabel="y",title=""):
     #散布図
 
     #グラフの描画
-    print(len(xdata))
-    print(len(ydata))
     ax.scatter(xdata,ydata,marker='o',s=20)
     #グラフの範囲指定
-    ax.set_xlim([30,40])
-    ax.set_ylim([0,50])
+    xmin = xdata[0]
+    xmax = xdata[len(xdata)-1]
+
+    ax.set_xlim(x_range)
+    ax.set_ylim(y_range)
 
     #目盛り文字サイズ
     ax.tick_params(labelsize = 10)
@@ -305,6 +331,7 @@ def show_tauinv_t_graph(temps,taus,fitting=False,tc=30.0):
     fig = plt.figure(figsize=WINDOW_SIZE)
     ax = fig.add_subplot(111)
     fig.suptitle("tauinv vs temperature", size=18, weight=2)
+    
     #生データグラフのセット
     tauinvs = 1 / (taus*1000)
     ax.scatter(temps,tauinvs,marker='o',s=20)
@@ -359,7 +386,7 @@ def show_tauinv_t_graph(temps,taus,fitting=False,tc=30.0):
     plt.show()
 
     
-def analysisfordir(inputFileDirectory):
+def analysisfordir(inputFileDirectory,fitfunc,init_parameter,plot_fittingcurve = True,skipfunc = lambda param : False):
     '''
     指定ディレクトリ内のASCファイルを解析し、自己相関関数のフィッティングを行う。
 
@@ -367,6 +394,160 @@ def analysisfordir(inputFileDirectory):
     ----------
     inputFileDirectory : string
         データASCファイルの入っているディレクトリへの完全パス。
+    fitfunc : function
+        フィッティング関数
+    init_parameter : list
+        フィッティングパラメーターの初期値。fitfuncのパラメーター数と合わせないとエラーになる
+    plot_fittingcurve : bool
+        フィッティングの有無。（デフォルトTrue）
+    skipfunc : function
+        フィッティングのスキップ条件。返り値はbool。引数paramに対しTrueを返すときスキップする。（デフォルトではFalseをreturn）
+
+    Returns
+    -------
+    result_parameters : list
+        辞書型を要素にもつ。辞書型は{"temp":number 温度, "q":number 散乱角度, "fitparam":ndarray フィッティングパラメーターのnumpy配列}
+    '''
+
+    ###ファイル読み込み-----------------------------------------
+    #データASCファイルへのパスをすべて読み込み
+    input_data_files = glob.glob(os.path.join(inputFileDirectory,"*.ASC"))
+
+    #ファイルの順番を温度でソート、配列の番号を変えれば他のパラメーターでもソート可能
+    input_data_files.sort(key=lambda s: int(re.sub(".ASC","",re.sub(inputFileDirectory + "\\\\","",s)).split("_")[0]))
+
+    #結果格納用の配列
+    coef_times = []
+    coef_Is = []
+    coef_fit_params = []
+    result_parameters = []
+    qs = np.empty(0)
+    temps = np.empty(0)
+    temps_for_label = np.empty(0)
+
+    #各ASCについて解析-------------------------------------------------------------
+    for input_data_file in input_data_files:
+        #ファイル名から各パラメーターを取得（angle_temp_closs_time_name.ASC）
+        filename = re.sub(".ASC","",re.sub(inputFileDirectory + "\\\\","",input_data_file)) #ファイル名取り出し（パスの部分と拡張子を除去）
+        input_parameters = filename.split("_") #パラメータを取得
+
+        #取得パラメータ
+        angle = float(input_parameters[0])
+        temperature = float(input_parameters[1])
+        # time = float(input_parameters[3])
+        sample_name = input_parameters[4]
+
+        #データセット
+        data = getdata(input_data_file)
+        x_data = data[:,0]
+        y_data = data[:,1]
+
+        # フィッティングに影響するノイズの除去
+        x_data = x_data[5::]
+        y_data = y_data[5::]
+
+        #データの規格化
+        #y_data = nomalize(y_data)
+
+        # スキップ条件
+        if (skipfunc(temperature)):
+            continue
+
+        ###自己相関関数のフィッティング-----------------------------------------------
+        #フィッティングが失敗したときは例外処理を施し、生データのみプロットする
+        try:
+            param_opt, cov = curve_fit(fitfunc,x_data,y_data,init_parameter)
+            print(temperature," fitting completed")
+
+            #角度の計算、保存
+            q = calculating_q(angle)
+            qs = np.append(qs,q)
+            #温度の保存
+            temps = np.append(temps,temperature/10)
+
+            # フィッティングパラメータ格納
+            coef_fit_params.append(param_opt)
+
+            #フィッティングパラメーターの結果取得
+            result_parameters.append({"temp":temperature/10,"q":q,"fitparam":np.array(param_opt.tolist())})
+
+        except RuntimeError:
+            print(angle," fitting failed")
+            coef_fit_params.append(None)
+
+        # 散布図データ格納
+        coef_times.append(x_data)
+        coef_Is.append(y_data)
+        temps_for_label = np.append(temps_for_label,temperature)
+        
+
+    ###グラフの表示----------------------------------------------------
+    #グラフインスタンス生成
+    fig_corf = plt.figure()
+    ax_corf = fig_corf.add_subplot(111)
+    fig_corf.suptitle("Correlation Function", size=18)
+    # グラフカラーコード
+    red = 0
+    green = 40
+    blue = 255
+    delta_c = math.floor(255 / len(coef_times))
+
+    for i in range(len(coef_times)):
+        # カラーコード生成
+        # if(red<=255-delta_c):
+        #     red += delta_c
+        # elif(blue>=0+delta_c):
+        #     blue -= delta_c
+        red += delta_c
+        blue -= delta_c
+        red_16 = format(red, '02x')
+        green_16 = format(green, '02x')
+        blue_16 = format(blue, '02x')
+        color_code = "#" + red_16 + green_16 + blue_16
+        
+        #生データ
+        temp_label = str('{:.3g}'.format(temps_for_label[i]/10))
+        # angle_label = str('{:.3g}'.format(angle*18./6000.))
+        if temps_for_label[i]%10==0:
+            ax_corf.scatter(coef_times[i],coef_Is[i],marker='o',c=color_code,s=2,label=temp_label)
+        else:
+            ax_corf.scatter(coef_times[i],coef_Is[i],marker='o',c=color_code,s=2)
+        
+        #フィッティング曲線
+        #x軸刻み(最小オーダー、最大オーダー、プロット数)
+        if(plot_fittingcurve and len(coef_fit_params[i])>0):
+            x_axis = np.logspace(-3.9,4.2,1000)
+            y_fit = fitfunc(x_axis,*coef_fit_params[i])
+            ax_corf.plot(x_axis, y_fit, linewidth=1.3, c=color_code)
+    
+    ###ラベル等の設定
+    ax_corf.grid(True)
+    ax_corf.legend(fontsize=10,title="temperature")
+    ax_corf.set_xlim([0.0001,20000])
+    ax_corf.set_ylim([-0.003,0.16])
+    ax_corf.set_xlabel('time (ms)', fontsize=12)
+    ax_corf.set_ylabel('f', fontsize=12)
+    ax_corf.tick_params(labelsize=12)
+
+    #logscaleに
+    setting1 = plt.gca()
+    setting1.set_xscale('log')
+    
+    plt.show()
+    
+    # return taus, qs, temps
+    return result_parameters
+
+def analysisfordir2(inputFileDirectory,plot_fittingcurve = True):
+    '''
+    指定ディレクトリ内のASCファイルを解析し、自己相関関数のフィッティングを行う。
+
+    Parameters
+    ----------
+    inputFileDirectory : string
+        データASCファイルの入っているディレクトリへの完全パス。
+    plot_fittingcurve : bool
+        フィッティングの有無（デフォルトtrue）
 
     Returns
     -------
@@ -386,14 +567,21 @@ def analysisfordir(inputFileDirectory):
     input_data_files.sort(key=lambda s: int(re.sub(".ASC","",re.sub(inputFileDirectory + "\\\\","",s)).split("_")[0]))
 
     #結果格納用の配列
-    taus = np.empty(0)
+    coef_times = []
+    coef_Is = []
+    coef_fit_params = []
+
+    taus1 = np.empty(0)
+    taus2 = np.empty(0)
+    betas1 = np.empty(0)
+    betas2 = np.empty(0)
     qs = np.empty(0)
     temps = np.empty(0)
+    temps_for_label = np.empty(0)
 
-    #グラフインスタンス生成
-    fig_corf = plt.figure()
-    ax_corf = fig_corf.add_subplot(111,title="Correlataion Function")
-
+    init_parameter = [0.04,1,2,0.002,1,1000,0]
+    # init_parameter = [0.08,1,2,0,1,1000,0]
+    
     #各ASCについて解析-------------------------------------------------------------
     for input_data_file in input_data_files:
         #ファイル名から各パラメーターを取得（angle_temp_closs_time_name.ASC）
@@ -403,73 +591,129 @@ def analysisfordir(inputFileDirectory):
         #取得パラメータ
         angle = float(input_parameters[0])
         temperature = float(input_parameters[1])
-        time = float(input_parameters[3])
+        # time = float(input_parameters[3])
         sample_name = input_parameters[4]
-        
+
         #データセット
         data = getdata(input_data_file)
         x_data = data[:,0]
         y_data = data[:,1]
-        init_parameter = [1,0,1,1]
+        # init_parameter = [0.3,1,1,0.1,1,0.1,0]
+        # init_parameter = [0.3,1,0.005,0.01,100,0.01,0]
+
+        # フィッティングに影響するノイズの除去
+        x_data = x_data[15::]
+        y_data = y_data[15::]
 
         #データの規格化
-        y_data = nomalize(y_data)
-        
-        #フィッティング曲線表示のフラグ
-        plot_fittingcurve = True
+        # y_data = nomalize(y_data)
+
+        # スキップ条件
+        if (temperature < 280 or temperature > 360 or temperature % 10 != 0):
+            continue
+
 
         ###自己相関関数のフィッティング-----------------------------------------------
         #フィッティングが失敗したときは例外処理を施し、生データのみプロットする
         try:
-            param_opt, cov = curve_fit(correlationFunction,x_data,y_data,init_parameter)
+            param_opt, cov = curve_fit(double_correlation_function,x_data,y_data,init_parameter)
             print(temperature," fitting completed")
 
             #フィッティングパラメーターの取得
-            a = param_opt[0]
-            b = param_opt[1]
-            beta = param_opt[2]
-            tau = param_opt[3]
+            a1 = param_opt[0]
+            beta1 = param_opt[1]
+            tau1 = param_opt[2]
+            a2 = param_opt[3]
+            beta2 = param_opt[4]
+            tau2 = param_opt[5]
+            b = param_opt[6]
 
             #τの保存
-            taus = np.append(taus,tau * (10**-3))
+            taus1 = np.append(taus1,tau1 * (10**-3))
+            taus2 = np.append(taus2,tau2 * (10**-3))
+            # betaの保存
+            betas1 = np.append(betas1, beta1)
+            betas2 = np.append(betas2, beta2)
             #角度の計算、保存
             q = calculating_q(angle)
             qs = np.append(qs,q)
             #温度の保存
             temps = np.append(temps,temperature/10)
 
-        except RuntimeError:
-            print(angle," fitting failed")
-            plot_fittingcurve = False
+            # フィッティングパラメータ格納
+            coef_fit_params.append(param_opt)
 
-        ###グラフの表示----------------------------------------------------
+        except RuntimeError:
+            print(temperature," fitting failed")
+            coef_fit_params.append([])
+
+        # 散布図データ格納
+        coef_times.append(x_data)
+        coef_Is.append(y_data)
+        temps_for_label = np.append(temps_for_label,temperature)
+        
+
+    ###グラフの表示----------------------------------------------------
+    #グラフインスタンス生成
+    fig_corf = plt.figure()
+    ax_corf = fig_corf.add_subplot(111)
+    fig_corf.suptitle("Correlation Function", size=18)
+    # グラフカラーコード
+    red = 0
+    green = 40
+    blue = 255
+    delta_c = math.floor(255 / len(coef_times))
+
+    for i in range(len(coef_times)):
+        # カラーコード生成
+        # if(red<=255-delta_c):
+        #     red += delta_c
+        # elif(blue>=0+delta_c):
+        #     blue -= delta_c
+        red += delta_c
+        blue -= delta_c
+        red_16 = format(red, '02x')
+        green_16 = format(green, '02x')
+        blue_16 = format(blue, '02x')
+        color_code = "#" + red_16 + green_16 + blue_16
+        
         #生データ
-        temp_label = str('{:.3g}'.format(temperature/10))
-        angle_label = str('{:.3g}'.format(angle*18./6000.))
-        ax_corf.scatter(x_data,y_data,marker='o',s=2,label=temp_label)
+        temp_label = str('{:.3g}'.format(temps_for_label[i]/10))
+        # angle_label = str('{:.3g}'.format(angle*18./6000.))
+        if temps_for_label[i]%10==0:
+            ax_corf.scatter(coef_times[i],coef_Is[i],marker='o',c=color_code,s=2,label=temp_label)
+        else:
+            ax_corf.scatter(coef_times[i],coef_Is[i],marker='o',c=color_code,s=2)
+        
         
         #フィッティング曲線
         #x軸刻み(最小オーダー、最大オーダー、プロット数)
-        if(plot_fittingcurve):
-            x_axis = np.logspace(-3.2,4.2,1000)
-            y_fit = correlationFunction(x_axis,a,b,beta,tau)
-            ax_corf.plot(x_axis, y_fit, linewidth=1.3)
-        
-        ###ラベル等の設定
-        ax_corf.grid(True)
-        ax_corf.legend(fontsize=10,title="angle")
-        ax_corf.set_ylim([-0.1,1.3])
-        ax_corf.set_xlabel('time (ms)', fontsize=12)
-        ax_corf.set_ylabel('f', fontsize=12)
+        x_axis = np.logspace(-3.9,4.2,1000)
+        if(plot_fittingcurve and len(coef_fit_params[i])>0):
+            
+            y_fit = double_correlation_function(x_axis,coef_fit_params[i][0],coef_fit_params[i][1],coef_fit_params[i][2],coef_fit_params[i][3],coef_fit_params[i][4],coef_fit_params[i][5],coef_fit_params[i][6])
+            ax_corf.plot(x_axis, y_fit, linewidth=1.3, c=color_code)
 
-        #logscaleに
-        setting1 = plt.gca()
-        setting1.set_xscale('log')
+        # x_axis = np.logspace(-5.2,4.2,1000)
+        # y_fit = double_correlation_function(x_axis,init_parameter[0],init_parameter[1],init_parameter[2],init_parameter[3],init_parameter[4],init_parameter[5],init_parameter[6])
+        # ax_corf.plot(x_axis, y_fit, linewidth=0.3, c=color_code)
+    
+    ###ラベル等の設定
+    ax_corf.grid(True)
+    ax_corf.legend(fontsize=10,title="temperature")
+    ax_corf.set_xlim([0.0001,20000])
+    ax_corf.set_ylim([-0.003,0.15])
+    ax_corf.set_xlabel('time (ms)', fontsize=12)
+    ax_corf.set_ylabel('f', fontsize=12)
+    ax_corf.tick_params(labelsize=12)
+
+    #logscaleに
+    setting1 = plt.gca()
+    setting1.set_xscale('log')
         
     plt.show()
     
-    return taus, qs, temps
-
+    return taus1, taus2, betas1, betas2, qs, temps
 
 ###--------------------------------------------------------------------------------------
 if(__name__ == '__main__'):
